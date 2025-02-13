@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { connectToDatabase } from "./mongodb";
+import { connectToDatabase } from "../../../lib/mongodb";
 
 export async function createUser(email: string, password: string) {
   const { db } = await connectToDatabase();
