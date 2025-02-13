@@ -1,2 +1,5 @@
-# BuildBuddy
-Capstone Project for IT491
+# BuildBuddy (IT491 Capstone Project)
+
+BuildBuddy is an AI-powered platform that helps users design and build their ideal computer setup. Using a Large Language Model (LLM), BuildBuddy provides personalized PC OR laptop recommendations tailored to specific user needs, whether that may be gaming, work, or content creation. BuildBuddy can also suggest setup logistics; for example, peripherals (keyboards, mice, monitors) and ergonomic accessories, with the ability to generate a comprehensive shopping list with real-time pricing and availability from multiple retailers.
+
+When trying to choose the right PC, laptop, or peripherals at times it can be overwhelming, this project aims to help consumers purchase the perfect equipment for their situation. By asking the user a series of questions, it can use the data we give it along with a Large Language Model to curate a list of parts or products to purchase. BuildBuddy can also help those who don’t wish to build their own by allowing them to custom order a prebuilt computer along with accessories.
