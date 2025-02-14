@@ -1,28 +1,17 @@
-import { MongoClient } from 'mongodb';
+// import { PrismaClient } from "@prisma/client/edge"; //used for edge computing
+import { PrismaClient } from "@prisma/client";
+import { User } from "../../prisma/types";
 
-const uri = process.env.MONGODB_URI;
-const options = {};
+const prisma = new PrismaClient() //connects to db
 
-let client;
-let clientPromise;
+// // run inside `async` function - example of create
+// const newUser = await prisma.user.create({
+//   data: {
+//     name: 'Alice',
+//     email: 'alice@prisma.io',
+//   },
+// })
 
-if (!process.env.MONGODB_URI) {
-  throw new Error('Please add your Mongo URI to .env.local');
-}
-
-if (process.env.NODE_ENV === 'development') {
-  if (!global._mongoClientPromise) {
-    client = new MongoClient(uri, options);
-    global._mongoClientPromise = client.connect();
-  }
-  clientPromise = global._mongoClientPromise;
-} else {
-  client = new MongoClient(uri, options);
-  clientPromise = client.connect();
-}
-
-export async function connectToDatabase() {
-  const client = await clientPromise;
-  const db = client.db();
-  return { client, db };
+export async function obtainUsers(): Promise<User[]> {
+  return await prisma.user.findMany();
 }
