@@ -7,39 +7,90 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Chats {
-  id       String   @id @default(auto()) @map("_id") @db.ObjectId
-  archived Boolean
-  display  String
-  messages String[]
+model Chat {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  display     String
+  creatorID   String    @db.ObjectId
+  creator     User      @relation(fields: [creatorID], references: [id])
+  archived    Boolean
+  messages    Message[]
+  created     DateTime  @db.Date
+  lastUpdated DateTime  @db.Date
+
+  Recommendation Recommendation[] @relation("chat")
 }
 
-model Messages {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  author    String
-  message   String
-  timestamp DateTime @db.Date
+model Message {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  Chat         Chat?    @relation(fields: [chatId], references: [id])
+  chatId       String   @db.ObjectId
+  isBot        Boolean
+  userAuthorId String?  @db.ObjectId
+  userAuthor   User?    @relation(fields: [userAuthorId], references: [id])
+  message      String
+  timestamp    DateTime @db.Date
 }
 
 model Product {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  created       DateTime @db.Date
+  updated       DateTime @db.Date
   category      String
-  description   String
-  discountPrice Float
-  link          String
-  name          String
-  price         Int
-  rating        String
+  description   String?
+  price         Float
+  discountPrice Float?
+  link          String?
+  name          String?
+  rating        String?
   specs         String[]
-  vendor        String
+  vendor        String?
+
+  cpuFor         Recommendation[] @relation("cpu")
+  gpuFor         Recommendation[] @relation("gpu")
+  ramFor         Recommendation[] @relation("ram")
+  psuFor         Recommendation[] @relation("psu")
+  motherboardFor Recommendation[] @relation("motherboard")
+  storageFor     Recommendation[] @relation("storage")
+
+  recommendationIDs String[]         @db.ObjectId
+  recommendations   Recommendation[] @relation("accessories", fields: [recommendationIDs], references: [id])
 }
 
 model User {
-  id         String @id @default(auto()) @map("_id") @db.ObjectId
-  budget_max Int
-  budget_min Int
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  budget_min Int? // null indicates no min
+  budget_max Int? // null indicates no max
   email      String
   password   String
   role       String
   username   String
+  created    DateTime @db.Date
+
+  Chats          Chat[]
+  Messages       Message[]
+  Recommendation Recommendation[] @relation("user")
+}
+
+model Recommendation {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  created        DateTime @db.Date
+  userId         String   @db.ObjectId
+  chatId         String   @db.ObjectId
+  cpuId          String?  @db.ObjectId
+  gpuId          String?  @db.ObjectId
+  ramId          String?  @db.ObjectId
+  psuId          String?  @db.ObjectId
+  motherboardId  String?  @db.ObjectId
+  storageId      String?  @db.ObjectId
+  accessoriesIds String[] @db.ObjectId
+
+  user        User      @relation("user", fields: [userId], references: [id])
+  chat        Chat      @relation("chat", fields: [chatId], references: [id])
+  cpu         Product?  @relation("cpu", fields: [cpuId], references: [id])
+  gpu         Product?  @relation("gpu", fields: [gpuId], references: [id])
+  ram         Product?  @relation("ram", fields: [ramId], references: [id])
+  psu         Product?  @relation("psu", fields: [psuId], references: [id])
+  motherboard Product?  @relation("motherboard", fields: [motherboardId], references: [id])
+  storage     Product?  @relation("storage", fields: [storageId], references: [id])
+  accessories Product[] @relation("accessories", fields: [accessoriesIds], references: [id])
 }
