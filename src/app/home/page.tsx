@@ -1,80 +1,199 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { ArrowRightCircleIcon } from "@heroicons/react/24/solid";
+import { useState } from 'react';
+import { Box, Typography, Button, Paper, TextField, Stack } from '@mui/material';
+import Link from 'next/link';
+import Image from 'next/image';
 
-export default function Home() {
+export default function HomePage() {
+  const [messages, setMessages] = useState([
+    { sender: 'bot', text: 'Hello! How can I assist you today?' }
+  ]);
+  const [userInput, setUserInput] = useState('');
+
+  const handleSend = () => {
+    if (userInput.trim() === '') return;
+    const newMessages = [...messages, { sender: 'user', text: userInput }];
+    newMessages.push({ sender: 'bot', text: getBotResponse(userInput) });
+    setMessages(newMessages);
+    setUserInput('');
+  };
+
+  const getBotResponse = (input: string) => {
+    const responses: Record<string, string> = {
+      hello: 'Hi there! How can I help you?',
+      bye: 'Have a great day.',
+      help: 'You can reach out to support@buildbuddy.com.'
+    };
+    return responses[input.toLowerCase()] || "I can't actually understand anything yet. This is just a test.";
+  };
+
   return (
-    <main className="min-h-screen flex bg-gray-900 text-white">
-      {/* Left 1/4: Chatbot Panel */}
-      <aside className="w-1/4 bg-white text-black p-6 flex flex-col">
-        <h2 className="text-xl font-bold text-black-400">💬 Chat</h2>
-        <div className="flex-1 overflow-y-auto mt-4 space-y-2">
-          <div className="bg-gray-700 text-white p-3 rounded-md">Hello! How can I help?</div>
-          <div className="bg-blue-500 text-white p-3 rounded-md self-end">I need a gaming PC!</div>
-        </div>
-        <input
-          type="text"
-          placeholder="Type a message..."
-          className="mt-4 p-2 bg-white-700 text-black rounded-md border border-gray w-full"
-        />
-      </aside>
-
-      {/* Right 3/4: Main Content */}
-      <section className="w-3/4 flex flex-col items-center justify-center px-6">
-        {/* Hero Section */}
-        <div className="text-center max-w-2xl">
-          <h1 className="text-5xl font-bold mb-4 text-blue-400">
-            BuildBuddy
-          </h1>
-          <p className="text-gray-300 text-lg">
-            Your AI-powered assistant for building the perfect PC. Get tailored recommendations
-            based on your needs, budget, and preferences.
-          </p>
-
-          {/* Buttons */}
-          <div className="mt-8 flex gap-4 justify-center">
-            <Link
-              href="/login"
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-lg flex items-center gap-2 transition"
+    <Box display="flex" height="100vh" sx={{ p: 3, bgcolor: '#121212' }}>
+      {/* Chatbot Panel */}
+      <Paper
+        elevation={3}
+        sx={{
+          width: '25%',
+          bgcolor: 'white',
+          color: 'black',
+          p: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: 3,
+          boxShadow: 3,
+          mr: 2
+        }}
+      >
+        <Typography variant="h6" color="primary" fontWeight={600} sx={{ mb: 1 }}>
+          💬 Chatbot
+        </Typography>
+        
+        {/* Chat Messages */}
+        <Box sx={{ flex: 1, overflowY: 'auto', mt: 1, p: 1, display: 'flex', flexDirection: 'column' }}>
+          {messages.map((msg, index) => (
+            <Box
+              key={index}
+              sx={{
+                display: 'flex',
+                justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                width: '100%',
+                mb: 1
+              }}
             >
-              Get Started <ArrowRightCircleIcon className="w-6 h-6" />
-            </Link>
-            <Link
+              <Paper
+                sx={{
+                  p: 1.5,
+                  borderRadius: 3,
+                  bgcolor: msg.sender === 'bot' ? 'grey.300' : 'primary.main',
+                  color: msg.sender === 'bot' ? 'black' : 'white',
+                  maxWidth: '90%',
+                  width: 'auto',
+                  textAlign: msg.sender === 'bot' ? 'left' : 'right',
+                  boxShadow: 1,
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word',
+                  whiteSpace: 'pre-wrap'
+                }}
+              >
+                <Typography variant="body2">{msg.text}</Typography>
+              </Paper>
+            </Box>
+          ))}
+        </Box>
+
+        {/* Chat Input Box */}
+        <Box sx={{ display: 'flex', mt: 1, gap: 1 }}>
+          <TextField
+            variant="outlined"
+            fullWidth
+            sx={{ borderRadius: 3 }}
+            value={userInput}
+            onChange={(e) => setUserInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            placeholder="Type a message..."
+          />
+          <Button onClick={handleSend} variant="contained" sx={{ borderRadius: 3 }}>
+            Send
+          </Button>
+        </Box>
+      </Paper>
+
+      {/* Main Content */}
+      <Box
+        sx={{
+          flex: 1,
+          bgcolor: '#1E1E1E',
+          color: 'white',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 4,
+          borderRadius: 3,
+          boxShadow: 3
+        }}
+      >
+        <Paper
+          elevation={4}
+          sx={{
+            p: 4,
+            borderRadius: 4,
+            bgcolor: '#252525',
+            color: 'white',
+            boxShadow: 3,
+            maxWidth: '500px',
+            textAlign: 'center',
+            mb: 3
+          }}
+        >
+          {/* Logo + Title */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+            <Image src="/favicon.ico" alt="BuildBuddy Logo" width={50} height={50} />
+            <Typography variant="h4" component="h1" fontWeight={600}>
+              BuildBuddy AI
+            </Typography>
+          </Box>
+
+          <Typography variant="h6" paragraph fontWeight={400}>
+            Your AI-powered assistant for building the perfect PC.
+          </Typography>
+          <Stack direction="row" spacing={2} sx={{ mt: 2 }} justifyContent="center">
+            <Button
+              variant="contained"
+              color="primary"
+              component={Link}
+              href="/login"
+              sx={{ borderRadius: 3, px: 3, py: 1 }}
+            >
+              Get Started
+            </Button>
+            <Button
+              variant="contained"
+              sx={{
+                bgcolor: 'red',
+                color: 'white',
+                borderRadius: 3,
+                px: 3,
+                py: 1,
+                '&:hover': { bgcolor: 'darkred' }
+              }}
+              component={Link}
               href="/home"
-              className="border border-gray-400 hover:border-white text-gray-300 px-6 py-3 rounded-lg text-lg transition"
             >
               Explore
-            </Link>
-          </div>
-        </div>
+            </Button>
+          </Stack>
+        </Paper>
 
         {/* Features Section */}
-        <section className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl">
-          <FeatureCard
-            title="🔍 Smart Recommendations"
-            description="Tell us what you need, and BuildBuddy will suggest the best PC parts for you."
-          />
-          <FeatureCard
-            title="⚡ Performance Optimized"
-            description="Compare benchmarks and find the best price-to-performance ratio."
-          />
-          <FeatureCard
-            title="🛒 One-Click Buying"
-            description="Add all recommended parts to your cart with a single click."
-          />
-        </section>
-      </section>
-    </main>
-  );
-}
-
-// Feature Card Component
-function FeatureCard({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="bg-gray-800 p-6 rounded-lg shadow-md hover:scale-105 transition">
-      <h3 className="text-xl font-semibold text-blue-400">{title}</h3>
-      <p className="text-gray-300 mt-2">{description}</p>
-    </div>
+        <Stack spacing={2} sx={{ maxWidth: '700px', width: '100%', p: 2 }}>
+          {[
+            { title: '🔍 Smart Recommendations', description: 'Get tailored PC part suggestions based on your needs.' },
+            { title: '⚡ Performance Optimized', description: 'Compare benchmarks and find the best price-to-performance ratio.' },
+            { title: '🛒 One-Click Buying', description: 'Add all recommended parts to your cart instantly.' }
+          ].map((feature, index) => (
+            <Paper
+              key={index}
+              elevation={2}
+              sx={{
+                p: 3,
+                borderRadius: 3,
+                bgcolor: '#252525',
+                color: 'white',
+                textAlign: 'center',
+                boxShadow: 2,
+                m: 1
+              }}
+            >
+              <Typography variant="h6" fontWeight={600}>
+                {feature.title}
+              </Typography>
+              <Typography variant="body2">{feature.description}</Typography>
+            </Paper>
+          ))}
+        </Stack>
+      </Box>
+    </Box>
   );
 }
