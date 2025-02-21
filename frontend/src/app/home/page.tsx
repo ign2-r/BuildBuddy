@@ -10,22 +10,40 @@ export default function HomePage() {
     { sender: 'bot', text: 'Hello! How can I assist you today?' }
   ]);
   const [userInput, setUserInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (userInput.trim() === '') return;
-    const newMessages = [...messages, { sender: 'user', text: userInput }];
-    newMessages.push({ sender: 'bot', text: getBotResponse(userInput) });
-    setMessages(newMessages);
-    setUserInput('');
-  };
 
-  const getBotResponse = (input: string) => {
-    const responses: Record<string, string> = {
-      hello: 'Hi there! How can I help you?',
-      bye: 'Have a great day.',
-      help: 'You can reach out to support@buildbuddy.com.'
-    };
-    return responses[input.toLowerCase()] || "I can't actually understand anything yet. This is just a test.";
+    const userMessage = { sender: 'user', text: userInput };
+    setMessages((prev) => [...prev, userMessage]);
+    setUserInput('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userInput })
+      });
+
+      if (!response.ok) {
+        const errorDetails = await response.text();
+        console.error('Backend API Error:', errorDetails);
+        setMessages((prev) => [...prev, { sender: 'bot', text: `Backend API Error: ${errorDetails}` }]);
+        setIsLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      const botMessage = { sender: 'bot', text: data.reply };
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setMessages((prev) => [...prev, { sender: 'bot', text: 'Error connecting to the server.' }]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -48,7 +66,7 @@ export default function HomePage() {
         <Typography variant="h6" color="primary" fontWeight={600} sx={{ mb: 1 }}>
           💬 Chatbot
         </Typography>
-        
+
         {/* Chat Messages */}
         <Box sx={{ flex: 1, overflowY: 'auto', mt: 1, p: 1, display: 'flex', flexDirection: 'column' }}>
           {messages.map((msg, index) => (
@@ -68,7 +86,6 @@ export default function HomePage() {
                   bgcolor: msg.sender === 'bot' ? 'grey.300' : 'primary.main',
                   color: msg.sender === 'bot' ? 'black' : 'white',
                   maxWidth: '90%',
-                  width: 'auto',
                   textAlign: msg.sender === 'bot' ? 'left' : 'right',
                   boxShadow: 1,
                   wordBreak: 'break-word',
@@ -92,9 +109,10 @@ export default function HomePage() {
             onChange={(e) => setUserInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Type a message..."
+            disabled={isLoading}
           />
-          <Button onClick={handleSend} variant="contained" sx={{ borderRadius: 3 }}>
-            Send
+          <Button onClick={handleSend} variant="contained" sx={{ borderRadius: 3 }} disabled={isLoading}>
+            {isLoading ? '...' : 'Send'}
           </Button>
         </Box>
       </Paper>
