@@ -1,19 +1,23 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const chatbotRoutes = require('./src/routes/chatbotRoutes');
+const testRoutes = require("./src/routes/testRoutes");
 const dotenv = require('dotenv');
 const cors = require('cors');
-const mongoose = require("mongoose");
+const {connectDB} = require('./src/database/mongoHandler');
 
 const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use('/api', chatbotRoutes);
 
 // Mongo
-mongoose.connect(process.env.DATABASE_URL);
+connectDB();
+
+app.use('/api', chatbotRoutes);
+app.use('/test', testRoutes);
+
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

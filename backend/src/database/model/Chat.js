@@ -1,7 +1,8 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 const { Schema, model } = mongoose;
+const { ObjectId } = mongoose.Types;
 
-const chatSchema = new Schema({
+const chatSchema = new mongoose.Schema({
     display: { type: String, required: true },
     creator: { type: Schema.Types.ObjectId, ref: "User", required: true, immutable: true },
     archived: { type: Boolean, default: false },
@@ -25,12 +26,12 @@ const chatSchema = new Schema({
     },
 });
 
-chatSchema.statics.findById = function(id) {
-    return this.find({ id });
+chatSchema.statics.withRecommendationsByUser = function(id) {
+    return this.populate("creator").populate("recommendation").find({ creator: new ObjectId(id) });
 };
 
-chatSchema.statics.withRecommendationsByUser = function(id) {
-    return this.populate("creator").populate("recommendation").find({ creator: id });
+chatSchema.statics.findByUsername = function(username) {
+    return this.find({ username: new RegExp(username, 'i')});
 };
 
 chatSchema.query.withMessages = function() {
@@ -38,7 +39,4 @@ chatSchema.query.withMessages = function() {
 };
 
 const Chat = model("Chat", chatSchema);
-export default Chat;
-
-// statics - universal and not by instance
-// query - add to query - chainable with other querys - need to call after a find or where
+module.exports = Chat;
