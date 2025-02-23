@@ -35,6 +35,7 @@
 // // Export a module-scoped MongoClient. By doing this in a
 // // separate module, the client can be shared across functions.
 // export default client
+// Uncomment and if needed for adapters but may cause issues with packages
 
 export interface User {
     _id?: string,
