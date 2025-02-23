@@ -2,16 +2,36 @@
 
 import { useState } from 'react';
 import { Container, Box, TextField, Button, Typography, Link } from '@mui/material';
+import { doCredentialLogin, doRegister } from '../actions';
+import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [currError, setCurrError] = useState('');
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Handle registration logic here
-    console.log({ name, email, password });
+    try{
+      const formData = new FormData(e.currentTarget);
+      const response = await doRegister(formData);
+
+      if (response) {
+        const response = await doCredentialLogin(formData);
+        if (!!response.error) {
+            setCurrError(response.error);
+        } else {
+          router.push("/home");
+        }
+      } else{
+        setCurrError("Something has went wrong")
+      }
+    } catch (e) {
+      console.error(e);
+      setCurrError(e instanceof Error ? e.message : String(e));
+    }
   };
 
   return (
@@ -20,12 +40,18 @@ export default function RegisterPage() {
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Register
         </Typography>
+        {!!currError &&
+          <Typography color='red' align='center'>
+            {currError}
+          </Typography>
+        }
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
           <TextField
             label="Full Name"
             fullWidth
             required
             margin="normal"
+            name='name'
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -35,6 +61,7 @@ export default function RegisterPage() {
             fullWidth
             required
             margin="normal"
+            name='email'
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -44,6 +71,7 @@ export default function RegisterPage() {
             fullWidth
             required
             margin="normal"
+            name='password'
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
