@@ -1,17 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { Container, Box, TextField, Button, Typography, Link } from '@mui/material';
+import { doCredentialLogin } from "@/app/actions";
+import { useRouter } from 'next/navigation';
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [invalid, setInvalid] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const router = useRouter();
+
+  const credentialsAction = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log({ email, password });
-  };
+
+    try {
+      const formData = new FormData(e.currentTarget);
+      const response = await doCredentialLogin(formData);
+
+      if (!!response.error) {
+        if (response.error === "Invalid credentials.") {
+          setInvalid(true);
+        }
+      } else {
+      router.push("/home");
+      }
+    } catch (e) {
+      console.error(e);
+      setInvalid(true);
+    }
+  }
 
   return (
     <Container maxWidth="sm">
@@ -19,13 +39,15 @@ export default function LoginPage() {
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Login
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+        {invalid && (<Typography color='red' align='center'>Invalid credentials</Typography>)}
+        <Box component="form" onSubmit={credentialsAction} sx={{ mt: 2 }}>
           <TextField
             label="Email"
             type="email"
             fullWidth
             required
             margin="normal"
+            name="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -35,6 +57,7 @@ export default function LoginPage() {
             fullWidth
             required
             margin="normal"
+            name="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -43,7 +66,7 @@ export default function LoginPage() {
           </Button>
         </Box>
         <Typography variant="body2" align="center" sx={{ mt: 2 }}>
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/register" underline="hover">
             Register here
           </Link>
