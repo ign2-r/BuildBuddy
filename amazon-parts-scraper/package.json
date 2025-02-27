@@ -1,0 +1,29 @@
+{
+  "name": "amazon-parts-scraper",
+  "version": "1.0.0",
+  "description": "A terminal-based scraper for fetching computer parts from Amazon and storing them in a MongoDB database.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.4.7",
+    "inquirer": "^8.2.5",
+    "mongoose": "^8.10.1",
+    "puppeteer": "^24.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  },
+  "keywords": [
+    "scraper",
+    "amazon",
+    "mongodb",
+    "node"
+  ],
+  "author": "",
+  "license": "ISC"
+}
