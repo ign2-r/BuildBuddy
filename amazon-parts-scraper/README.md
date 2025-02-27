@@ -1,5 +1,3 @@
-# amazon-parts-scraper/amazon-parts-scraper/README.md
-
 # Amazon Parts Scraper
 
 This project is a terminal-based web scraper designed to fetch product data from Amazon based on user input. It allows users to search for computer parts and stores the relevant information in a MongoDB database.
