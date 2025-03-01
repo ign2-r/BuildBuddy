@@ -13,7 +13,9 @@ const chatSchema = new mongoose.Schema({
         type: [
             {
                 createdAt: { type: Date, default: Date.now, immutable: true },
+                display: {type: String},
                 cpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+                cpuCooler: { type: Schema.Types.ObjectId, ref: "Product", required: false },
                 gpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
                 ram: { type: Schema.Types.ObjectId, ref: "Product", required: false },
                 psu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
