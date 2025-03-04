@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { Box, Typography, Button, Paper, Stack } from '@mui/material';
-import Link from 'next/link';
 import Image from 'next/image';
 import PCSelection from '../../components/PCSelection';
 import Chatbot from '../../components/Chatbot';
+import ShoppingListDrawer from '../../components/ShoppingListDrawer';
 
 export default function HomePage() {
     const [showPCSelection, setShowPCSelection] = useState(false);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     return (
         <Box display="flex" height="100vh" sx={{ p: 3, bgcolor: '#121212' }}>
@@ -45,7 +46,6 @@ export default function HomePage() {
                     boxShadow: 3
                 }}
             >
-
                 {!showPCSelection ? (
                     <>
                         <Paper
@@ -78,46 +78,29 @@ export default function HomePage() {
                                 <Button
                                     variant="contained"
                                     color="primary"
-                                    onClick={() => setShowPCSelection(true)} // Show PC selection on click
+                                    onClick={() => setShowPCSelection(true)} 
                                     sx={{ borderRadius: 3, px: 3, py: 1 }}
                                 >
                                     Get Started
                                 </Button>
+                                <Button
+                                    variant="contained"
+                                    color="secondary"
+                                    onClick={() => setIsDrawerOpen(true)}
+                                    sx={{ borderRadius: 3, px: 3, py: 1 }}
+                                >
+                                    Open Shopping List
+                                </Button>
                             </Stack>
                         </Paper>
-
-                        {/* PC Recommendations Section */}
-                        <Stack spacing={2} sx={{ maxWidth: '700px', width: '100%', p: 2 }}>
-                            {[
-                                { title: '🔥 Top Gaming PCs', description: 'Explore the best gaming setups for high performance.' },
-                                { title: '💼 Workstation Builds', description: 'Optimize productivity with top-tier business machines.' },
-                                { title: '🛒 Budget-Friendly Options', description: 'Find the best price-to-performance PC builds.' }
-                            ].map((feature, index) => (
-                                <Paper
-                                    key={index}
-                                    elevation={2}
-                                    sx={{
-                                        p: 3,
-                                        borderRadius: 3,
-                                        bgcolor: '#252525',
-                                        color: 'white',
-                                        textAlign: 'center',
-                                        boxShadow: 2,
-                                        m: 1
-                                    }}
-                                >
-                                    <Typography variant="h6" fontWeight={600}>
-                                        {feature.title}
-                                    </Typography>
-                                    <Typography variant="body2">{feature.description}</Typography>
-                                </Paper>
-                            ))}
-                        </Stack>
                     </>
                 ) : (
-                    <PCSelection />
+                    <PCSelection setIsDrawerOpen={setIsDrawerOpen} />
                 )}
             </Box>
+
+            {/* Shopping List Drawer */}
+            <ShoppingListDrawer isDrawerOpen={isDrawerOpen} setIsDrawerOpen={setIsDrawerOpen} />
         </Box>
     );
 }
