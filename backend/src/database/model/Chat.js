@@ -29,7 +29,6 @@ const chatSchema = new mongoose.Schema({
 });
 
 chatSchema.statics.getUserRecommendation = function (id) {
-    console.log(`Get Recommendation with ${id}`);
     return this.find({ creator: createFromHexString(id) })
         .populate("creator")
         .populate({
@@ -83,6 +82,12 @@ chatSchema.statics.addRecommendation = function (chatId, cpuId, gpuId, ramId, ps
 chatSchema.query.withMessages = function () {
     return this.populate("messages").populate("creator").sort({ createdAt: 1 });
 };
+
+
+// get a user's chats
+// get a user's recs
+// archieve a chat
+// sanitize id's
 
 const Chat = model("Chat", chatSchema);
 module.exports = Chat;
