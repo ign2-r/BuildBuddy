@@ -6,14 +6,14 @@ const chatSchema = new mongoose.Schema({
     display: { type: String, required: true },
     creator: { type: Schema.Types.ObjectId, ref: "User", required: true, immutable: true },
     archived: { type: Boolean, default: false },
-    createdAt: { type: Date, default: Date.now, immutable: true },
-    updatedAt: { type: Date, default: Date.now },
+    createdAt: { type: Date, default: new Date(), immutable: true },
+    updatedAt: { type: Date, default: new Date() },
     messages: { type: [{ type: Schema.Types.ObjectId, ref: "Message" }], default: [] },
     recommendation: {
         type: [
             {
-                createdAt: { type: Date, default: Date.now, immutable: true },
-                display: {type: String},
+                createdAt: { type: Date, default: new Date(), immutable: true },
+                display: { type: String },
                 cpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
                 cpuCooler: { type: Schema.Types.ObjectId, ref: "Product", required: false },
                 gpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
@@ -31,10 +31,7 @@ const chatSchema = new mongoose.Schema({
 chatSchema.statics.getUserRecommendation = function (id) {
     return this.find({ creator: createFromHexString(id) })
         .populate("creator")
-        .populate({
-            path: "recommendation",
-            populate: [{ path: "cpu" }, { path: "gpu" }, { path: "ram" }, { path: "psu" }, { path: "motherboard" }, { path: "storage" }, { path: "accessories" }],
-        })
+        .withRecommendations()
         .select({ recommendation: 1, updatedAt: 1, creator: 1 });
 };
 
@@ -42,10 +39,7 @@ chatSchema.statics.withRecommendationsByUser = function (id) {
     console.log(`With populated recommendation with ${id}`);
     return this.find({ creator: createFromHexString(id) })
         .populate("creator")
-        .populate({
-            path: "recommendation",
-            populate: [{ path: "cpu" }, { path: "gpu" }, { path: "ram" }, { path: "psu" }, { path: "motherboard" }, { path: "storage" }, { path: "accessories" }],
-        });
+        .withRecommendations();
 };
 
 chatSchema.statics.findByUsername = function (username) {
@@ -79,12 +73,22 @@ chatSchema.statics.addRecommendation = function (chatId, cpuId, gpuId, ramId, ps
     });
 };
 
+// get a user's chats
+chatSchema.statics.getChatByUser = function (uid) {
+    return this.find({ creator: createFromHexString(uid) }).withMessages().withRecommendations();
+};
+
 chatSchema.query.withMessages = function () {
     return this.populate("messages").populate("creator").sort({ createdAt: 1 });
 };
 
+chatSchema.query.withRecommendations = function () {
+    return this.populate({
+        path: "recommendation",
+        populate: [{ path: "cpu" }, { path: "gpu" }, { path: "ram" }, { path: "psu" }, { path: "motherboard" }, { path: "storage" }, { path: "accessories" }],
+    });
+};
 
-// get a user's chats
 // get a user's recs
 // archieve a chat
 // sanitize id's

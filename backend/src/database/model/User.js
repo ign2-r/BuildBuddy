@@ -8,7 +8,7 @@ const userSchema = new Schema({
     password: { type: String, required: true }, //hashed
     role: { type: String, required: true }, // free, paid, admin
     username: { type: String, required: true, unique: true }, //sanitize
-    createdAt: { type: Date, default: Date.now },
+    createdAt: { type: Date, default: new Date()},
     notes: { type: [String], default: [] } //sanitize
 });
 

@@ -27,6 +27,18 @@ router.get("/allChat", async (req, res) => {
     }
 });
 
+router.get("/userChats", async (req, res) => {
+    const { uid } = req.query;
+
+    try {
+        const data = await Chat.getChatByUser(uid).exec();
+        res.status(200).json({ chats: data, status: "success", status_message: "" });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: "Internal Error" });
+    }
+});
+
 router.post("/database", async (req, res) => {
     const newUser = new User({
         email: "testuser@example.com",

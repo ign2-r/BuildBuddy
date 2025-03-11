@@ -3,7 +3,7 @@ const { Schema, model } = mongoose;
 const { createFromHexString } = mongoose.Types.ObjectId;
 
 const productSchema = new Schema({
-    name: { type: String },
+    name: { type: String, unique: true },
     category: { type: String, required: true }, // cpu, gpu, ram, etc.
     description: { type: String },
     msrpPrice: { type: Number }, // backup and for rough estimates
@@ -14,7 +14,7 @@ const productSchema = new Schema({
             vendor: { type: String },
             price: { type: Number },
             discountPrice: { type: Number },
-            createdAt: {type: Date, default: new Date.now()}
+            createdAt: {type: Date, default: new Date()}
         },
     ],
     brand: { type: String }, // AMD, intel, etc, sanitize
@@ -32,8 +32,8 @@ const productSchema = new Schema({
     }, // core count, size
     aesthetic: { type: [String] }, //[any color], white, black, pink, rgb, no lights,
     releaseDate: { type: Date },
-    createdAt: { type: Date, default: Date.now, immutable: true },
-    updatedAt: { type: Date, default: Date.now },
+    createdAt: { type: Date, default: new Date(), immutable: true },
+    updatedAt: { type: Date, default: new Date() },
 });
 
 // Make a link pull based on the item
