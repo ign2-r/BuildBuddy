@@ -17,7 +17,6 @@
     "@mui/icons-material": "^6.4.6",
     "@mui/material": "^6.4.6",
     "@mui/material-nextjs": "^6.4.3",
-    "@prisma/client": "^6.3.1",
     "@tailwindcss/postcss": "^4.0.6",
     "bcrypt": "^5.1.1",
     "dayjs": "^1.11.13",
@@ -36,7 +35,6 @@
     "@types/react-dom": "^19.0.4",
     "eslint": "^9",
     "eslint-config-next": "15.1.7",
-    "prisma": "^6.3.1",
     "typescript": "^5"
   }
 }
