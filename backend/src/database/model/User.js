@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const { Schema, model } = mongoose;
 
+// Note the logged in user should have their data stored in a jwt
+
 const userSchema = new Schema({
     budget_min: { type: Number, required: false }, //ensure float and rounded to second place
     budget_max: { type: Number, required: false },
@@ -12,6 +14,11 @@ const userSchema = new Schema({
     notes: { type: [String], default: [] } //sanitize
 });
 
+/**
+ * Find the user by username 
+ * @param {string} username to be searched.
+ * @returns {User}
+ */
 userSchema.statics.findByUsername = function(username) {
     return this.find({ username: new RegExp(username, 'i')});
 };

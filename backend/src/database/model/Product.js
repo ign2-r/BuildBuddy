@@ -36,8 +36,8 @@ const productSchema = new Schema({
     updatedAt: { type: Date, default: new Date() },
 });
 
-// Make a link pull based on the item
-// Make a product update thing for specs and links
+// TODO: Make a link pull based on the item
+// TODO: Make a product update thing for specs and links
 
 /**
  * Update a link for a product, pass null to any missing values
@@ -136,7 +136,7 @@ productSchema.statics.addSpec = async function (productId, name = null, speed, w
 
 /**
  * get a list of products by category, can be limited
- * @param {string} category to be searched. 
+ * @param {string} category to be searched.
  * @param {number} limit the amount of returns - optional, default 25.
  */
 productSchema.statics.getCategory = function (category, limit = 25) {
@@ -144,9 +144,20 @@ productSchema.statics.getCategory = function (category, limit = 25) {
 };
 
 /**
+ * Find the product by name 
+ * @param {string} name to be searched.
+ * @returns {Product}
+ */
+productSchema.statics.findByUsername = function(name) {
+    return this.find({ name: new RegExp(name, 'i')});
+};
+
+// ===========================================Queries================================================
+/**
  * additional query to futher filter a static and get products between a min and max
  * @param {number} minPrice to be used to query min.
  * @param {number} maxPrice to be used to query max.
+ * @returns {Product}
  */
 productSchema.query.msrpPriceRange = function (minPrice, maxPrice) {
     return this.find({ msrpPrice: { $gte: minPrice, $lte: maxPrice } }).sort({ msrpPrice: 1 });

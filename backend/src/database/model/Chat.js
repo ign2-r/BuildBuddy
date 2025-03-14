@@ -28,39 +28,102 @@ const chatSchema = new mongoose.Schema({
     },
 });
 
-chatSchema.statics.getUserRecommendation = function (id) {
-    return this.find({ creator: createFromHexString(id) })
-        .populate("creator")
+/**
+ * Remove the instance of the link
+ * @param {string} productId - Product id of the item being added to.
+ * @param {string} url - link to the product used as reference.
+ * @returns {boolean} - determines if it has succeeded
+ */
+productSchema.statics.removeLink = async function (productId, url) {
+    try {
+        const result = await this.updateOne({ _id: createFromHexString(productId) }, { $pull: { links: { url: url } } });
+
+        if (result.modifiedCount > 0) {
+            console.log(`Successfully removed item with ID: ${productId}`);
+            return true;
+        } else {
+            console.log(`Item with ID: ${productId} not found in any document`);
+            return false;
+        }
+    } catch (error) {
+        console.error("Error removing product link: " + error);
+        return false;
+    }
+};
+
+/**
+ * Swap the status of the archive.
+ * @param {string} chatId - Chat id of the item.
+ * @param {string} [archiveState=null] - state to set the archive manually.
+ * @returns {boolean} - determines if it has succeeded
+ */
+chatSchema.statics.toggleArchive = async function (chatId, toggleArchive = null) {
+    try {
+        const chat = await this.findById({ _id: createFromHexString(chatId) });
+        chat.archived = toggleArchive === true || toggleArchive === false ? toggleArchive : !chat.archived;
+        const result = await chat.save();
+
+        if (result) {
+            console.log(`Successfully toggled chat ID to archive: ${chatId}`);
+            return true;
+        } else {
+            console.log(`Item with ID: ${chatId} not found in any document`);
+            return false;
+        }
+    } catch (error) {
+        console.error("Error updating chat to toggled archive: " + error);
+        return false;
+    }
+};
+
+/**
+ * Get the recommendations with uid, only has recommendatons, last update, and creator
+ * @param {string} uid - uid to search.
+ * @returns {Chat[]}
+ */
+chatSchema.statics.getUserRecommendation = function (uid) {
+    return this.find({ creator: createFromHexString(uid) })
         .withRecommendations()
-        .select({ recommendation: 1, updatedAt: 1, creator: 1 });
+        .sort({ updatedAt: 1 })
+        .select({ recommendation: 1, creator: 1 });
 };
 
-chatSchema.statics.withRecommendationsByUser = function (id) {
-    console.log(`With populated recommendation with ${id}`);
-    return this.find({ creator: createFromHexString(id) })
-        .populate("creator")
-        .withRecommendations();
+/**
+ * Get the filled informaton for all chats based on UID
+ * @param {string} uid - uid to search.
+ * @returns {Chat[]}
+ */
+chatSchema.statics.withRecommendationsByUser = function (uid) {
+    console.log(`With populated recommendation with ${uid}`);
+    return this.find({ creator: createFromHexString(uid) }).withRecommendations();
 };
 
-chatSchema.statics.findByUsername = function (username) {
-    return this.find({ username: new RegExp(username, "i") });
-};
-
+/**
+ * Get all stats populated - should only be used for development
+ * @returns {Chat[]}
+ */
 chatSchema.statics.getAll = function () {
-    return this.find({})
-        .populate("messages")
-        .populate("creator")
-        .populate({
-            path: "recommendation",
-            populate: [{ path: "cpu" }, { path: "gpu" }, { path: "ram" }, { path: "psu" }, { path: "motherboard" }, { path: "storage" }, { path: "accessories" }],
-        });
+    return this.find({}).populate("messages").populate("creator").withRecommendations();
 };
 
-chatSchema.statics.addRecommendation = function (chatId, cpuId, gpuId, ramId, psuId, motherboardId, storageId, ...accessoriesIds) {
+/**
+ * Add recommendation to a chat, recommended to do key value run.
+ * @param {string} chatId - Product id of the item.
+ * @param {string} cpuId - CPU object id.
+ * @param {string} cpuCooler - CPU cooler object id.
+ * @param {string} gpuId - GPU object id.
+ * @param {string} ramId - RAM  object id.
+ * @param {string} psuId - PSU  object id.
+ * @param {string} motherboardId - Motherboard object id.
+ * @param {string[]} accessoriesIds - Keys for all accessories.
+ * @returns {Chat}
+ */
+chatSchema.statics.addRecommendation = function (chatId, cpuId, cpuCoolerId, gpuId, ramId, psuId, motherboardId, storageId, accessoriesIds) {
     return this.findById(createFromHexString(chatId)).then((chat) => {
         if (!chat) throw new Error("Chat not found");
         const recommendation = {
             cpu: cpuId && createFromHexString(cpuId),
+            cpuCooler: cpuCoolerId && createFromHexString(cpuCoolerId),
             gpu: gpuId && createFromHexString(gpuId),
             ram: ramId && createFromHexString(ramId),
             psu: psuId && createFromHexString(psuId),
@@ -73,15 +136,39 @@ chatSchema.statics.addRecommendation = function (chatId, cpuId, gpuId, ramId, ps
     });
 };
 
-// get a user's chats
+/**
+ * Get user chats populated with recommendations.
+ * @param {string} uid - search by user.
+ * @returns {Chat[]}
+ */
 chatSchema.statics.getChatByUser = function (uid) {
-    return this.find({ creator: createFromHexString(uid) }).withMessages().withRecommendations();
+    return this.find({ creator: createFromHexString(uid) })
+        .withMessages()
+        .withRecommendations();
 };
 
+// ===========================================Queries================================================
+
+/**
+ * Query to add to search that populates the messages.
+ * @returns {Chat[]}
+ */
 chatSchema.query.withMessages = function () {
-    return this.populate("messages").populate("creator").sort({ createdAt: 1 });
+    return this.populate("messages").sort({ createdAt: 1 });
 };
 
+/**
+ * Query to add to search that add creator information - assumes the user information should be loaded into client memory.
+ * @returns {Chat[]}
+ */
+chatSchema.query.withCreatorInfo = function () {
+    return this.populate("creator");
+};
+
+/**
+ * Query to add to search that populates the recommendations.
+ * @returns {Chat[]}
+ */
 chatSchema.query.withRecommendations = function () {
     return this.populate({
         path: "recommendation",
@@ -89,8 +176,7 @@ chatSchema.query.withRecommendations = function () {
     });
 };
 
-// get a user's recs
-// archieve a chat
+// archive a chat
 // sanitize id's
 
 const Chat = model("Chat", chatSchema);
