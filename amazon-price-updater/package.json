@@ -1,0 +1,15 @@
+{
+    "name": "amazon-price-updater",
+    "version": "1.0.0",
+    "description": "Tool to update product data with current Amazon prices and links",
+    "main": "src/index.js",
+    "scripts": {
+      "start": "node src/index.js"
+    },
+    "dependencies": {
+      "chalk": "^4.1.2",
+      "cheerio": "^1.0.0-rc.12",
+      "commander": "^11.0.0",
+      "puppeteer": "^22.8.2"
+    }
+  }
