@@ -22,7 +22,6 @@ async function scrapeAmazonProduct(page, product) {
     });
     
     
-    // Wait for page to fully load with longer timeout
     await page.waitForSelector('body', { timeout: 15000 });
     
     // Check for CAPTCHA
@@ -37,7 +36,6 @@ async function scrapeAmazonProduct(page, product) {
       return product;
     }
     
-    // Use a more reliable way to find any product links
     const productLink = await page.evaluate(() => {
       // Try multiple selector patterns to find product links
       const selectors = [
@@ -77,13 +75,10 @@ async function scrapeAmazonProduct(page, product) {
       timeout: 30000 
     });
     
-    // Wait for product page to load
     await page.waitForSelector('body', { timeout: 10000 });
     
-    // Get the current URL
     const productUrl = page.url();
     
-    // Extract product details including prices
     const productDetails = await page.evaluate(() => {
       // Helper function to clean text
       const cleanText = text => text ? text.trim().replace(/\s+/g, ' ') : null;
