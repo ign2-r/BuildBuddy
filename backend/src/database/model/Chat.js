@@ -29,29 +29,6 @@ const chatSchema = new mongoose.Schema({
 });
 
 /**
- * Remove the instance of the link
- * @param {string} productId - Product id of the item being added to.
- * @param {string} url - link to the product used as reference.
- * @returns {boolean} - determines if it has succeeded
- */
-productSchema.statics.removeLink = async function (productId, url) {
-    try {
-        const result = await this.updateOne({ _id: createFromHexString(productId) }, { $pull: { links: { url: url } } });
-
-        if (result.modifiedCount > 0) {
-            console.log(`Successfully removed item with ID: ${productId}`);
-            return true;
-        } else {
-            console.log(`Item with ID: ${productId} not found in any document`);
-            return false;
-        }
-    } catch (error) {
-        console.error("Error removing product link: " + error);
-        return false;
-    }
-};
-
-/**
  * Swap the status of the archive.
  * @param {string} chatId - Chat id of the item.
  * @param {string} [archiveState=null] - state to set the archive manually.

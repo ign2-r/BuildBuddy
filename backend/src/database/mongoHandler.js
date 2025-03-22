@@ -1,54 +1,63 @@
 const mongoose = require("mongoose");
 const Chat = require("./model/Chat");
 const Message = require("./model/Message");
+const Product = require("./model/Product");
 
 const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.DATABASE_URL);
-    console.log("MongoDB Connected...");
-  } catch (error) {
-    console.error("MongoDB connection failed:", error);
-    process.exit(1);
-  }
+    try {
+        await mongoose.connect(process.env.DATABASE_URL);
+        console.log("MongoDB Connected...");
+    } catch (error) {
+        console.error("MongoDB connection failed:", error);
+        process.exit(1);
+    }
 };
 
-const addMessageToChat = async(chatId, message, isBot, userId) => {
-  try {
-    const currChat = await Chat.findById(chatId);
+const addMessageToChat = async (chatId, message, isBot, userId) => {
+    try {
+        const currChat = await Chat.findById(chatId);
 
-    if (!currChat){
-      return {status: "fail", message: "Chat ID not found"};
-    };
+        if (!currChat) {
+            return { status: "fail", message: "Chat ID not found" };
+        }
 
-    const newMessage = await Message.create({
-      chatId: chatId,
-      isBot: isBot && false,
-      message: message,
-      creator: userId
-    }); 
+        const newMessage = await Message.create({
+            chatId: chatId,
+            isBot: isBot && false,
+            message: message,
+            creator: userId,
+        });
 
-    const currMessage = await newMessage.save();
+        const currMessage = await newMessage.save();
 
-    if (!Array.isArray(currChat.messages)) {
-      currChat.messages = [];
+        if (!Array.isArray(currChat.messages)) {
+            currChat.messages = [];
+        }
+        currChat.messages.push(currMessage._id);
+        currChat.updatedAt = Date.now();
+
+        if (typeof currChat.save !== "function") {
+            console.error(`currChat is not a Mongoose document: ${JSON.stringify(currChat)}`);
+            return { status: "fail", message: "Internal error" };
+        }
+
+        await currChat.save();
+
+        return { status: "success", message: `` };
+    } catch (e) {
+        console.error(e);
+        return { status: "fail", message: `Something went wrong` };
     }
-    currChat.messages.push(currMessage._id);
-    currChat.updatedAt = Date.now();
-
-    if (typeof currChat.save !== 'function') {
-      console.error(`currChat is not a Mongoose document: ${JSON.stringify(currChat)}`);
-      return { status: "fail", message: "Internal error" };
-    }
-
-    await currChat.save();
-
-    return {status: "success", message: ``}
-  } catch (e){
-    console.error(e);
-    return {status: "fail", message: `Something went wrong`}
-  };
 };
 
+const getRecommendation = async (category, minBudget, maxBudget) => {
+    try {
+      const data = Product.getCategory(category, 15).msrpPriceRange(minBudget, maxBudget);
+      return { status: "success", message: `Obtained ${data.length}`, data: data };
+    } catch (e) {
+        console.error(e);
+        return { status: "fail", message: `Something went wrong`, data: null };
+    }
+};
 
-
-module.exports = {connectDB, addMessageToChat}; 
+module.exports = { connectDB, addMessageToChat, getRecommendation };

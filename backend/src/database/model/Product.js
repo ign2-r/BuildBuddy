@@ -36,7 +36,7 @@ const productSchema = new Schema({
     updatedAt: { type: Date, default: new Date() },
 });
 
-// TODO: Make a link pull based on the item
+// TODO: Make a link, pull based on the item
 // TODO: Make a product update thing for specs and links
 
 /**
@@ -148,9 +148,19 @@ productSchema.statics.getCategory = function (category, limit = 25) {
  * @param {string} name to be searched.
  * @returns {Product}
  */
-productSchema.statics.findByUsername = function(name) {
+productSchema.statics.findByName = function(name) {
     return this.find({ name: new RegExp(name, 'i')});
 };
+
+/**
+ * Upsert a product
+ * @param {product} product to be added.
+ * @returns {Product}
+ */
+productSchema.statics.findByName = function(product) {
+    return this.find({ name: new RegExp(name, 'i')});
+};
+
 
 // ===========================================Queries================================================
 /**
