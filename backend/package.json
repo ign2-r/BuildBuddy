@@ -15,10 +15,10 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "groq-sdk": "^0.17.0",
     "mongoose": "^8.10.1",
     "morgan": "^1.10.0",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "openai": "^4.89.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
