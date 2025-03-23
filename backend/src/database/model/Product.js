@@ -162,6 +162,34 @@ productSchema.statics.findByName = function (product) {
     return this.find({ name: new RegExp(name, "i") });
 };
 
+productSchema.statics.recSearch = function (category, minPrice, maxPrice, keywords) {
+    const pipeline = {
+        category: category,
+        msrpPrice: {
+            $gte: minPrice,
+            $lte: maxPrice,
+        },
+        $or: [
+            {
+                name: {
+                    $in: keywords,
+                },
+            },
+            {
+                brand: {
+                    $in: keywords,
+                },
+            },
+            {
+                "specs.other": {
+                    $in: keywords,
+                },
+            },
+        ],
+    };
+    return this.aggregate([{ $match: pipeline }]);
+};
+
 // ===========================================Queries================================================
 /**
  * additional query to futher filter a static and get products between a min and max
@@ -173,6 +201,24 @@ productSchema.query.msrpPriceRange = function (minPrice, maxPrice) {
     return this.find({ msrpPrice: { $gte: minPrice, $lte: maxPrice } }).sort({ msrpPrice: 1 });
 };
 
+/**
+ * search for other words
+ * @param {string} keywords to be used to query.
+ * @returns {Product}
+ */
+productSchema.query.searchByKeywords = function (keywords) {
+    const query = {
+        $or: [{ name: { $in: keywords } }, { brand: { $in: keywords } }, { "specs.other": { $in: keywords } }],
+    };
+
+    if (keywords.length === 0) {
+        return this.find(); // Return a few products if no keywords are provided
+    }
+    return this.find(query);
+};
+
 const Product = model("Product", productSchema);
 
 module.exports = Product;
+
+module.exports.VALID_CAT = ["cpu", "gpu", "memory", "power supply", "motherboard", "storage"];
