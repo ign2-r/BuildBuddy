@@ -5,7 +5,7 @@ const User = require("../database/model/User");
 const Product = require("../database/model/Product");
 const { addMessageToChat } = require("../database/mongoHandler");
 const fs = require("fs");
-const { resetChat } = require("../controllers/chatbotController");
+const { resetChat, testRec } = require("../controllers/chatbotController");
 
 dotenv.config();
 const router = express.Router();
@@ -137,5 +137,6 @@ router.post("/addRec", async (req, res) => {
 });
 
 router.post("/resetChat", resetChat);
+router.post("/testRec", testRec);
 
 module.exports = router;
