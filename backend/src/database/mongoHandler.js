@@ -50,10 +50,24 @@ const addMessageToChat = async (role, content, userId, currChat = null, chatId =
     }
 };
 
-const getRecommendation = async (category, minBudget, maxBudget) => {
+const getRecommendation = async (criteria) => {
     try {
-        const data = Product.getCategory(category, 15).msrpPriceRange(minBudget, maxBudget);
-        return { status: "success", status_message: `Obtained ${data.length}`, data: data };
+        const categories = Object.keys(criteria);
+
+        const res = await Promise.all(
+            categories.map(async (cat) => {
+                if (Product.VALID_CAT.includes(cat)) {
+                    const data = await Product.getCategory(cat, 3)
+                        .msrpPriceRange(criteria[cat].minBudget, criteria[cat].maxBudget)
+                        .select({ _id: 1, category: 1, brand: 1, msrpPrice: 1, releaseDate: 1, description: 1 });
+                    // .searchByKeywords(criteria[cat].preferences); //TODO: Figure out why keywords do not work - should figure out a better search technique / fuzzy search
+                    console.log(cat, data.length);
+                    return data;
+                }
+                return null; // Return null for categories not in VALID_CAT
+            })
+        );
+        return res.filter((item) => item !== null); // Filter out null values
     } catch (e) {
         console.error(e);
         return { status: "fail", status_message: `Something went wrong`, data: null };
