@@ -2,42 +2,43 @@ const mongoose = require("mongoose");
 const { Schema, model } = mongoose;
 const { createFromHexString } = mongoose.Types.ObjectId;
 
-const productSchema = new Schema({
-    name: { type: String, unique: true },
-    category: { type: String, required: true }, // cpu, gpu, ram, etc.
-    description: { type: String },
-    msrpPrice: { type: Number }, // backup and for rough estimates
-    links: [
-        {
-            url: { type: String },
-            rating: { type: Number },
-            vendor: { type: String },
-            price: { type: Number },
-            discountPrice: { type: Number },
-            createdAt: { type: Date, default: new Date() },
-        },
-    ],
-    brand: { type: String }, // AMD, intel, etc, sanitize
-    specs: {
-        type: [
-            {
-                speed: { type: String }, //includes ram size, storage size, core count cpu, wattages psu,
-                wattageUse: { type: Number },
-                size: { type: String }, // (itx, atx mini, micro, eatx), socket, pcie requirements, memory type
-                requirements: { type: [String], default: [] }, //key value check ex: {"cpu": [{size: "a1700", speed: "300"}]}
-                overclock: { type: Boolean },
-                other: { type: [String], default: [] }, // storage read write, ram size
-            },
-        ],
-    }, // core count, size
-    aesthetic: { type: [String] }, //[any color], white, black, pink, rgb, no lights,
-    releaseDate: { type: Date },
-    createdAt: { type: Date, default: new Date(), immutable: true },
-    updatedAt: { type: Date, default: new Date() },
-});
+const productLinkSchema = new Schema(
+    {
+        url: { type: String },
+        rating: { type: Number },
+        vendor: { type: String },
+        price: { type: Number },
+        discountPrice: { type: Number },
+        createdAt: { type: Date, default: new Date() },
+    },
+    { timestamps: true, id: false }
+);
 
-// Make a link pull based on the item
-// Make a product update thing for specs and links
+const productSchema = new Schema(
+    {
+        name: { type: String, unique: true },
+        category: { type: String, required: true }, // cpu, gpu, ram, etc.
+        description: { type: String },
+        msrpPrice: { type: Number }, // backup and for rough estimates
+        brand: { type: String }, // AMD, intel, etc, sanitize
+        links: [productLinkSchema],
+        specs: {
+            type: [
+                {
+                    speed: { type: String }, //includes ram size, storage size, core count cpu, wattages psu,
+                    wattageUse: { type: Number },
+                    size: { type: String }, // (itx, atx mini, micro, eatx), socket, pcie requirements, memory type
+                    requirements: { type: [String], default: [] }, //key value check ex: {"cpu": [{size: "a1700", speed: "300"}]}
+                    overclock: { type: Boolean },
+                    other: { type: [String], default: [] }, // storage read write, ram size
+                },
+            ],
+        }, // core count, size
+        aesthetic: { type: [String] }, //[any color], white, black, pink, rgb, no lights,
+        releaseDate: { type: Date },
+    },
+    { timestamps: true }
+);
 
 /**
  * Update a link for a product, pass null to any missing values
@@ -136,7 +137,7 @@ productSchema.statics.addSpec = async function (productId, name = null, speed, w
 
 /**
  * get a list of products by category, can be limited
- * @param {string} category to be searched. 
+ * @param {string} category to be searched.
  * @param {number} limit the amount of returns - optional, default 25.
  */
 productSchema.statics.getCategory = function (category, limit = 25) {
@@ -144,14 +145,80 @@ productSchema.statics.getCategory = function (category, limit = 25) {
 };
 
 /**
+ * Find the product by name
+ * @param {string} name to be searched.
+ * @returns {Product}
+ */
+productSchema.statics.findByName = function (name) {
+    return this.find({ name: new RegExp(name, "i") });
+};
+
+/**
+ * Upsert a product
+ * @param {product} product to be added.
+ * @returns {Product}
+ */
+productSchema.statics.findByName = function (product) {
+    return this.find({ name: new RegExp(name, "i") });
+};
+
+productSchema.statics.recSearch = function (category, minPrice, maxPrice, keywords) {
+    const pipeline = {
+        category: category,
+        msrpPrice: {
+            $gte: minPrice,
+            $lte: maxPrice,
+        },
+        $or: [
+            {
+                name: {
+                    $in: keywords,
+                },
+            },
+            {
+                brand: {
+                    $in: keywords,
+                },
+            },
+            {
+                "specs.other": {
+                    $in: keywords,
+                },
+            },
+        ],
+    };
+    return this.aggregate([{ $match: pipeline }]);
+};
+
+// ===========================================Queries================================================
+/**
  * additional query to futher filter a static and get products between a min and max
  * @param {number} minPrice to be used to query min.
  * @param {number} maxPrice to be used to query max.
+ * @returns {Product}
  */
 productSchema.query.msrpPriceRange = function (minPrice, maxPrice) {
     return this.find({ msrpPrice: { $gte: minPrice, $lte: maxPrice } }).sort({ msrpPrice: 1 });
 };
 
+/**
+ * search for other words
+ * @param {string} keywords to be used to query.
+ * @returns {Product}
+ */
+productSchema.query.searchByKeywords = function (keywords) {
+    const query = {
+        $or: [{ name: { $in: keywords } }, { brand: { $in: keywords } }, { "specs.other": { $in: keywords } }],
+    };
+
+    if (keywords.length === 0) {
+        return this.find(); // Return a few products if no keywords are provided
+    }
+    return this.find(query);
+};
+
 const Product = model("Product", productSchema);
 
 module.exports = Product;
+
+module.exports.VALID_CAT = ["cpu", "gpu", "memory", "power supply", "motherboard", "storage"];
