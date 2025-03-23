@@ -13,19 +13,20 @@ const connectDB = async () => {
     }
 };
 
-const addMessageToChat = async (chatId, message, isBot, userId) => {
+const addMessageToChat = async (role, content, userId, currChat = null, chatId = null, setChat = true) => {
     try {
-        const currChat = await Chat.findById(chatId);
+        if (!currChat && chatId) {
+            currChat = await Chat.findById(chatId);
+        }
 
         if (!currChat) {
-            return { status: "fail", message: "Chat ID not found" };
+            return { status: "fail", status_message: "Chat not found" };
         }
 
         const newMessage = await Message.create({
-            chatId: chatId,
-            isBot: isBot && false,
-            message: message,
-            creator: userId,
+            role: role,
+            content: content,
+            userAuthor: userId,
         });
 
         const currMessage = await newMessage.save();
@@ -34,29 +35,28 @@ const addMessageToChat = async (chatId, message, isBot, userId) => {
             currChat.messages = [];
         }
         currChat.messages.push(currMessage._id);
-        currChat.updatedAt = Date.now();
 
         if (typeof currChat.save !== "function") {
             console.error(`currChat is not a Mongoose document: ${JSON.stringify(currChat)}`);
-            return { status: "fail", message: "Internal error" };
+            return { status: "fail", status_message: "Internal error" };
         }
 
-        await currChat.save();
+        if (setChat) await currChat.save();
 
-        return { status: "success", message: `` };
+        return { status: "success", status_message: `` };
     } catch (e) {
         console.error(e);
-        return { status: "fail", message: `Something went wrong` };
+        return { status: "fail", status_message: `Something went wrong` };
     }
 };
 
 const getRecommendation = async (category, minBudget, maxBudget) => {
     try {
-      const data = Product.getCategory(category, 15).msrpPriceRange(minBudget, maxBudget);
-      return { status: "success", message: `Obtained ${data.length}`, data: data };
+        const data = Product.getCategory(category, 15).msrpPriceRange(minBudget, maxBudget);
+        return { status: "success", status_message: `Obtained ${data.length}`, data: data };
     } catch (e) {
         console.error(e);
-        return { status: "fail", message: `Something went wrong`, data: null };
+        return { status: "fail", status_message: `Something went wrong`, data: null };
     }
 };
 
