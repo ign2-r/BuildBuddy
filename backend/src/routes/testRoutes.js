@@ -103,7 +103,6 @@ router.get("/recommendations", async (req, res) => {
     }
 });
 
-// TODO: finish data insert endpoint -
 router.post("/addRandomProducts", async (req, res) => {
     try {
         const dataFile = require("./final-temp.json");

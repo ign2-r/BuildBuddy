@@ -36,9 +36,6 @@ const productSchema = new Schema({
     updatedAt: { type: Date, default: new Date() },
 });
 
-// TODO: Make a link, pull based on the item
-// TODO: Make a product update thing for specs and links
-
 /**
  * Update a link for a product, pass null to any missing values
  * @param {string} productId - Product id of the item.
@@ -144,12 +141,12 @@ productSchema.statics.getCategory = function (category, limit = 25) {
 };
 
 /**
- * Find the product by name 
+ * Find the product by name
  * @param {string} name to be searched.
  * @returns {Product}
  */
-productSchema.statics.findByName = function(name) {
-    return this.find({ name: new RegExp(name, 'i')});
+productSchema.statics.findByName = function (name) {
+    return this.find({ name: new RegExp(name, "i") });
 };
 
 /**
@@ -157,10 +154,9 @@ productSchema.statics.findByName = function(name) {
  * @param {product} product to be added.
  * @returns {Product}
  */
-productSchema.statics.findByName = function(product) {
-    return this.find({ name: new RegExp(name, 'i')});
+productSchema.statics.findByName = function (product) {
+    return this.find({ name: new RegExp(name, "i") });
 };
-
 
 // ===========================================Queries================================================
 /**
