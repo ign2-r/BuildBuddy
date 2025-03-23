@@ -5,6 +5,7 @@ const User = require("../database/model/User");
 const Product = require("../database/model/Product");
 const { addMessageToChat } = require("../database/mongoHandler");
 const fs = require("fs");
+const { resetChat } = require("../controllers/chatbotController");
 
 dotenv.config();
 const router = express.Router();
@@ -134,5 +135,7 @@ router.post("/addRec", async (req, res) => {
         res.status(500).json({ message: "Internal Error" });
     }
 });
+
+router.post("/resetChat", resetChat);
 
 module.exports = router;

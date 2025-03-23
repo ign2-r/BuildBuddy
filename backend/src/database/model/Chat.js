@@ -2,31 +2,32 @@ const mongoose = require("mongoose");
 const { Schema, model } = mongoose;
 const { createFromHexString } = mongoose.Types.ObjectId;
 
-const chatSchema = new mongoose.Schema({
-    display: { type: String, required: true },
-    creator: { type: Schema.Types.ObjectId, ref: "User", required: true, immutable: true },
-    archived: { type: Boolean, default: false },
-    createdAt: { type: Date, default: new Date(), immutable: true },
-    updatedAt: { type: Date, default: new Date() },
-    messages: { type: [{ type: Schema.Types.ObjectId, ref: "Message" }], default: [] },
-    recommendation: {
-        type: [
-            {
-                createdAt: { type: Date, default: new Date(), immutable: true },
-                display: { type: String },
-                cpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-                cpuCooler: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-                gpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-                ram: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-                psu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-                motherboard: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-                storage: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-                accessories: [{ type: Schema.Types.ObjectId, ref: "Product", required: false }],
-            },
-        ],
-        default: [],
+const chatSchema = new mongoose.Schema(
+    {
+        display: { type: String, required: true },
+        creator: { type: Schema.Types.ObjectId, ref: "User", required: true, immutable: true },
+        archived: { type: Boolean, default: false },
+        messages: { type: [{ type: Schema.Types.ObjectId, ref: "Message" }], default: [] },
+        recommendation: {
+            type: [
+                {
+                    createdAt: { type: Date, default: new Date(), immutable: true },
+                    display: { type: String },
+                    cpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+                    cpuCooler: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+                    gpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+                    ram: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+                    psu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+                    motherboard: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+                    storage: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+                    accessories: [{ type: Schema.Types.ObjectId, ref: "Product", required: false }],
+                },
+            ],
+            default: [],
+        },
     },
-});
+    { timestamps: true }
+);
 
 /**
  * Swap the status of the archive.
