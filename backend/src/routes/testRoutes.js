@@ -5,7 +5,8 @@ const User = require("../database/model/User");
 const Product = require("../database/model/Product");
 const { addMessageToChat } = require("../database/mongoHandler");
 const fs = require("fs");
-const { resetChat, testRec } = require("../controllers/chatbotController");
+const { testRec } = require("../controllers/chatbotController");
+const {resetChat} = require("../controllers/chatController");
 
 dotenv.config();
 const router = express.Router();
