@@ -152,7 +152,17 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
           placeholder="Type a message..."
           disabled={isLoading}
           autoComplete="off"
+          slotProps={{
+            input: {
+              inputProps: {
+                maxLength: 250,
+              }
+            }
+          }}
         />
+        <Typography variant="caption" sx={{ color: 'gray', mt: 1 }}>
+          {userInput.length}/250
+        </Typography>
         <Button onClick={handleSend} variant="contained" sx={{ borderRadius: 3 }} disabled={isLoading}>
           {isLoading ? '...' : 'Send'}
         </Button>
