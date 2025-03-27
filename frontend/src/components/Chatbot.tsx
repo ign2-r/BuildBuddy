@@ -54,6 +54,20 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
   const handleSend = async () => {
     if (userInput.trim() === '') return;
 
+    const MAX_MESSAGES = 14;
+    const totalMessages = messages.filter(
+      (m) => m.role === 'user' || m.role === 'assistant'
+    ).length;
+  
+    if (totalMessages >= MAX_MESSAGES) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: '❌ You’ve reached the message limit for this conversation.' },
+      ]);
+      setUserInput('');
+      return;
+    }
+
     const userMessage = { role: 'user', content: userInput };
     setMessages((prev) => [...prev, userMessage]);
     setUserInput('');
