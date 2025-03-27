@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Box, Typography, Paper, TextField, Button } from '@mui/material';
 import { useSession } from 'next-auth/react';
 import { Chat } from '@/utils/db';
@@ -16,6 +16,8 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { data: session } = useSession();
   const userId = session?.user?._id;
+
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchChat = async () => {
@@ -51,6 +53,12 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
     fetchChat();
   }, [userId]);
 
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
   const handleSend = async () => {
     if (userInput.trim() === '') return;
 
@@ -58,7 +66,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
     const totalMessages = messages.filter(
       (m) => m.role === 'user' || m.role === 'assistant'
     ).length;
-  
+
     if (totalMessages >= MAX_MESSAGES) {
       setMessages((prev) => [
         ...prev,
@@ -97,7 +105,6 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
         console.log('📦 Setting recommendations:', data.all.results);
         setRecommendations(data.all.results);
       }
-
     } catch (error) {
       console.error('Error sending message:', error);
       setMessages((prev) => [...prev, { role: 'assistant', content: 'Error connecting to the server.' }]);
@@ -107,22 +114,31 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        flexGrow: 1,
+        minHeight: 0,
+        height: '100%',
+      }}
+    >
       <Typography variant="h6" color="primary" fontWeight={600} sx={{ mb: 1 }}>
         💬 Chatassistant
       </Typography>
 
       <Box
+        ref={scrollRef}
         sx={{
-          flex: 1,
+          flexGrow: 1,
           overflowY: 'auto',
-          mt: 1,
           p: 1,
           display: 'flex',
           flexDirection: 'column',
           bgcolor: 'grey.100',
           borderRadius: 2,
           boxShadow: 1,
+          minHeight: 0,
         }}
       >
         {messages.map((msg, index) => (
@@ -154,7 +170,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
         ))}
       </Box>
 
-      <Box sx={{ display: 'flex', mt: 1, gap: 1 }}>
+      <Box sx={{ display: 'flex', mt: 1, gap: 1, flexShrink: 0 }}>
         <TextField
           id="chat-input"
           variant="outlined"
@@ -170,8 +186,8 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
             input: {
               inputProps: {
                 maxLength: 250,
-              }
-            }
+              },
+            },
           }}
         />
         <Typography variant="caption" sx={{ color: 'gray', mt: 1 }}>
