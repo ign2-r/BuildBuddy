@@ -1,54 +1,77 @@
 const mongoose = require("mongoose");
 const Chat = require("./model/Chat");
 const Message = require("./model/Message");
+const Product = require("./model/Product");
 
 const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.DATABASE_URL);
-    console.log("MongoDB Connected...");
-  } catch (error) {
-    console.error("MongoDB connection failed:", error);
-    process.exit(1);
-  }
+    try {
+        await mongoose.connect(process.env.DATABASE_URL);
+        console.log("MongoDB Connected...");
+    } catch (error) {
+        console.error("MongoDB connection failed:", error);
+        process.exit(1);
+    }
 };
 
-const addMessageToChat = async(chatId, message, isBot, userId) => {
-  try {
-    const currChat = await Chat.findById(chatId);
+const addMessageToChat = async (role, content, userId, currChat = null, chatId = null, setChat = true) => {
+    try {
+        if (!currChat && chatId) {
+            currChat = await Chat.findById(chatId);
+        }
 
-    if (!currChat){
-      return {status: "fail", message: "Chat ID not found"};
-    };
+        if (!currChat) {
+            return { status: "fail", status_message: "Chat not found" };
+        }
 
-    const newMessage = await Message.create({
-      chatId: chatId,
-      isBot: isBot && false,
-      message: message,
-      creator: userId
-    }); 
+        const newMessage = await Message.create({
+            role: role,
+            content: content,
+            userAuthor: userId,
+        });
 
-    const currMessage = await newMessage.save();
+        const currMessage = await newMessage.save();
 
-    if (!Array.isArray(currChat.messages)) {
-      currChat.messages = [];
+        if (!Array.isArray(currChat.messages)) {
+            currChat.messages = [];
+        }
+        currChat.messages.push(currMessage._id);
+
+        if (typeof currChat.save !== "function") {
+            console.error(`currChat is not a Mongoose document: ${JSON.stringify(currChat)}`);
+            return { status: "fail", status_message: "Internal error" };
+        }
+
+        if (setChat) await currChat.save();
+
+        return { status: "success", status_message: `` };
+    } catch (e) {
+        console.error(e);
+        return { status: "fail", status_message: `Something went wrong` };
     }
-    currChat.messages.push(currMessage._id);
-    currChat.updatedAt = Date.now();
-
-    if (typeof currChat.save !== 'function') {
-      console.error(`currChat is not a Mongoose document: ${JSON.stringify(currChat)}`);
-      return { status: "fail", message: "Internal error" };
-    }
-
-    await currChat.save();
-
-    return {status: "success", message: ``}
-  } catch (e){
-    console.error(e);
-    return {status: "fail", message: `Something went wrong`}
-  };
 };
 
+const getRecommendation = async (criteria) => {
+    try {
+        const categories = Object.keys(criteria);
 
+        const res = await Promise.all(
+            categories.map(async (cat) => {
+                if (Product.VALID_CAT.includes(cat)) {
+                    const data = await Product.getCategory(cat, 3)
+                        .msrpPriceRange(criteria[cat].minBudget, criteria[cat].maxBudget)
+                        .select({ _id: 1, category: 1, brand: 1, msrpPrice: 1, releaseDate: 1, description: 1 });
+                    // .searchByKeywords(criteria[cat].preferences); //TODO: Figure out why keywords do not work - should figure out a better search technique / fuzzy search
+                    console.log(cat, data.length);
+                    return data;
+                }
+                return null; // Return null for categories not in VALID_CAT
+            })
+        );
+        return res.filter((item) => item !== null); // Filter out null values
+    } catch (e) {
+        console.error(e);
+        return { status: "fail", status_message: `Something went wrong`, data: null };
+    }
+};
 
-module.exports = {connectDB, addMessageToChat}; 
+module.exports = { connectDB, addMessageToChat, getRecommendation };
