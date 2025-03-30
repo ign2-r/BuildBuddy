@@ -1,6 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
-const { processRecommendation, createChat, getChat } = require("../controllers/chatbotController");
+const { processRecommendation } = require("../controllers/chatbotController");
+const { createChat, getChat } = require("../controllers/chatController");
 
 dotenv.config();
 const router = express.Router();

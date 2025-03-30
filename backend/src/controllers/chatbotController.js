@@ -4,11 +4,8 @@ const OpenAI = require("openai");
 const dotenv = require("dotenv");
 const Chat = require("../database/model/Chat");
 
-const mongoose = require("mongoose");
-const Message = require("../database/model/Message");
 const { addMessageToChat, getRecommendation } = require("../database/mongoHandler");
-const { VALID_CAT } = require("../database/model/Product");
-const { createFromHexString } = mongoose.Types.ObjectId;
+const { CHAT_CONTEXT_REC } = require("../prompts/chatContext");
 
 dotenv.config();
 
@@ -64,6 +61,9 @@ JSON format:
   "status": "recommending"
 }`;
 
+// ============================================
+// Chat Agent Support Functions
+// ============================================
 function obtainAIAgent() {
     if (!GROQ_API_KEY) {
         throw new Error("Missing Groq API Key");
@@ -71,20 +71,7 @@ function obtainAIAgent() {
     return new OpenAI({ apiKey: process.env.GROQ_API_KEY, baseURL: process.env.AI_BASE_URL });
 }
 
-async function createChat(userId) {
-    const chat = new Chat({
-        display: "Chat 123",
-        creator: createFromHexString(userId),
-        messages: [],
-    });
-    const message = await addMessageToChat("system", CHAT_CONTEXT, userId, chat, false);
-    if (message.status != "success") throw new Error(message.status_message);
-    const message2 = await addMessageToChat("assistant", INITIAL_MESSAGE, userId, chat);
-    if (message2.status != "success") throw new Error(message2.status_message);
-    return { chat, message, message2 };
-}
-
-async function parseUserMessage(chatId, userId, message) {
+async function obtainChatResponse(messages) {
     const client = obtainAIAgent();
 
     console.log(`🛠 Sending request to GROQ API using SDK for ${userId} in ${chatId}`);
@@ -120,11 +107,32 @@ async function parseUserMessage(chatId, userId, message) {
             console.error("🚨 GROQ SDK Error: No response or choices found");
             return res.status(500).json({ reply: "GROQ SDK Error: No response or choices found" });
         }
-
         const botMessage = JSON.parse(response.choices[0].message.content);
-        let content = `${botMessage.response.content}${botMessage.response.content && botMessage.summary ? "\n\n" : ""}${
-            botMessage.summary ? `Current summary: ${botMessage.summary}` : ""
-        }`;
+
+        return botMessage;
+    } catch (error) {
+        console.error("🚨 GROQ SDK Rec Error:", error);
+    }
+}
+
+// ============================================
+// Chatbot Logic Functions
+// ============================================
+
+async function parseUserMessage(chatId, userId, message) {
+    console.log(`🛠 Sending request to GROQ API using SDK for ${userId} in ${chatId}`);
+    let chat = await Chat.findById(chatId).withMessages();
+    const messages = chat.messages.map((message) => {
+        return { role: message.role, content: message.content };
+    });
+
+    const temp = await addMessageToChat("user", message, userId, chat, null, false);
+    if (temp.status != "success") throw new Error("Failed to process message");
+    messages.push({ role: "user", content: message });
+
+    try {
+        const botMessage = await obtainChatResponse(messages);
+        let content = `${botMessage.response.content}${botMessage.response.content && botMessage.summary ? "\n\n" : ""}${botMessage.summary ? `Current summary: ${botMessage.summary}` : ""}`;
         if (botMessage.status == "recommending") {
             content = await makeRecommendation(chat, messages, botMessage);
         } else {
@@ -140,114 +148,74 @@ async function parseUserMessage(chatId, userId, message) {
             response: { role: botMessage.response.role, content: content, all: botMessage },
         };
     } catch (error) {
-        console.error("🚨 GROQ SDK Error:", error);
+        console.error("🚨 Error parsing message:", error);
         return { status: "fail", status_message: error.message, response: "Something went wrong, try again" };
     }
 }
 
-async function makeRecommendation(chat, messages, botMessage) {
-    const client = obtainAIAgent();
+// {
+//     "response": { "role": "assistant", "content": "<content message as string>" },
+//     "summary": "<summarize the criteria>",
+//     "results": {
+//         ${VALID_CAT.map(
+//             (cat) => `"${cat}": {
+//             "_id": <${cat} id>,
+//             "name": <${cat} name>,
+//         }`
+//         )}
+//     },
+//     "status": "<one of the following: questioning or recommending>"
+// }
 
+// {
+//     display: { type: String },
+//     cpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+//     cpuCooler: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+//     gpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+//     ram: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+//     psu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+//     motherboard: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+//     storage: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+//     accessories: [{ type: Schema.Types.ObjectId, ref: "Product", required: false }],
+// },
+
+async function makeRecommendation(chat, messages, botMessage) {
     const recProducts = await getRecommendation(botMessage.criteria);
     messages[0] = { role: "system", content: `${CHAT_CONTEXT_REC}\n\nPRODUCTS LIST ${JSON.stringify(recProducts)}` };
     try {
-        const response = await client.chat.completions.create({
-            model: "llama-3.3-70b-versatile",
-            messages: messages,
-            max_completion_tokens: 4096,
-            top_p: 0.95,
-            response_format: {
-                type: "json_object",
-            },
-        });
-
-        if (!response || !response.choices || response.choices.length === 0) {
-            console.error("🚨 GROQ SDK Error: No response or choices found");
-            return res.status(500).json({ reply: "GROQ SDK Error: No response or choices found" });
-        }
-        const botMessage = JSON.parse(response.choices[0].message.content);
-        const content = `${botMessage.response.content}${botMessage.response.content && botMessage.summary ? "\n\n" : ""}${
-            botMessage.summary ? `Current summary: ${botMessage.summary}` : ""
-        }`;
+        const botMessage = await obtainChatResponse(messages);
+        const content = `${botMessage.response.content}${botMessage.response.content && botMessage.summary ? "\n\n" : ""}${botMessage.summary ? `Current summary: ${botMessage.summary}` : ""}`;
         //TODO: optimize to do one push to the server and also not create so many references
         await addMessageToChat("assistant", content, chat.creator, chat, null, false);
         await addMessageToChat("system", JSON.stringify(botMessage), chat.creator, chat, null, false);
-        await chat.save();
 
-        console.log(botMessage);
+        console.log("recommendation results", botMessage);
+        const recommendation = {
+            display: `${new Date().toLocaleDateString().replace(/\//g, "_")}-rec`,
+            ...Object.keys(botMessage.results).reduce((acc, key) => {
+                acc[key] = botMessage.results[key]._id;
+                return acc;
+            }, {}),
+        };
+        const re2 = chat.recommendation.push(recommendation);
+        await chat.save();
 
         return content;
     } catch (error) {
-        console.error("🚨 GROQ SDK Rec Error:", error);
+        console.error("🚨 Rec Error:", error);
         return { status: "fail", status_message: error.message, response: "Something went wrong, try again" };
     }
 }
 
-exports.processMessage = async (req, res) => {
-    try {
-        const { message, chatId, userId } = req.body;
-        if (!message) {
-            return res.status(400).json({ error: "Message is required" });
-        }
-
-        const response = await chatbotService.getChatResponse(message);
-        res.json({ response });
-    } catch (error) {
-        res.status(500).json({ error: "Something went wrong" });
-    }
-};
-
+// ============================================
+// Chat Agent API
+// ============================================
 exports.processRecommendation = async (req, res) => {
     const { chatId, message, userId } = req.body;
     try {
         const response = await parseUserMessage(chatId, userId, message);
         if (response.status != "success") return res.status(500).json({ status: response.status, status_message: response.status_message, message: response.response });
         return res.status(200).json({ status: "success", status_message: ``, message: response.response });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ status: "fail", status_message: err._message });
-    }
-};
-
-exports.createChat = async (req, res) => {
-    const { userId } = req.body;
-    try {
-        const { chat, message, message2 } = await createChat(userId);
-        return res.status(201).json({ status: "success", status_message: `${message.status} to create chat`, chat: chat._id });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ status: "fail", status_message: err._message });
-    }
-};
-
-exports.resetChat = async (req, res) => {
-    const { chatId, userId } = req.body;
-    try {
-        const chat = await Chat.findById(chatId);
-        if (chat.messages) {
-            await Message.deleteMany({ _id: chat.messages });
-            chat.messages = [];
-        }
-
-        //TODO: Optimize to make both in one call
-        const message = await addMessageToChat("system", CHAT_CONTEXT, userId, chat);
-        if (message.status != "success") throw new Error(message.status_message);
-        const message2 = await addMessageToChat("assistant", INITIAL_MESSAGE, userId, chat);
-        if (message2.status != "success") throw new Error(message2.status_message);
-
-        return res.status(201).json({ status: "success", status_message: `${message.status} to reset chat` });
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ status: "fail", status_message: err._message });
-    }
-};
-
-exports.getChat = async (req, res) => {
-    const { userId, create } = req.body;
-    try {
-        let chat = await Chat.getChatByUser(userId);
-        if (chat.length == 0 && create === true) chat = (await createChat(userId)).chat;
-        return res.status(201).json({ status: "success", status_message: ``, chat: chat });
     } catch (err) {
         console.error(err);
         return res.status(500).json({ status: "fail", status_message: err._message });
