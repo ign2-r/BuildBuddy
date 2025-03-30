@@ -4,7 +4,8 @@ const dotenv = require("dotenv");
 const Chat = require("../database/model/Chat");
 
 const { addMessageToChat, getRecommendation } = require("../database/mongoHandler");
-const { CHAT_CONTEXT_REC} = require("../prompts/chatContext");
+
+const { CHAT_CONTEXT_REC } = require("../prompts/chatContext");
 
 dotenv.config();
 
@@ -12,9 +13,9 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 //TODO: set up functions for chatbot
 
-// ============================================ 
+// ============================================
 // Chat Agent Support Functions
-// ============================================ 
+// ============================================
 function obtainAIAgent() {
     if (!GROQ_API_KEY) {
         throw new Error("Missing Groq API Key");
@@ -48,12 +49,12 @@ async function obtainChatResponse(messages) {
     }
 }
 
-// ============================================ 
+
+// ============================================
 // Chatbot Logic Functions
 // ============================================
 
 async function parseUserMessage(chatId, userId, message) {
-
     console.log(`🛠 Sending request to GROQ API using SDK for ${userId} in ${chatId}`);
     let chat = await Chat.findById(chatId).withMessages();
     const messages = chat.messages.map((message) => {
@@ -66,9 +67,7 @@ async function parseUserMessage(chatId, userId, message) {
 
     try {
         const botMessage = await obtainChatResponse(messages);
-        let content = `${botMessage.response.content}${botMessage.response.content && botMessage.summary ? "\n\n" : ""}${
-            botMessage.summary ? `Current summary: ${botMessage.summary}` : ""
-        }`;
+        let content = `${botMessage.response.content}${botMessage.response.content && botMessage.summary ? "\n\n" : ""}${botMessage.summary ? `Current summary: ${botMessage.summary}` : ""}`;
         if (botMessage.status == "recommending") {
             content = await makeRecommendation(chat, messages, botMessage);
         } else {
@@ -89,20 +88,53 @@ async function parseUserMessage(chatId, userId, message) {
     }
 }
 
+
+// {
+//     "response": { "role": "assistant", "content": "<content message as string>" },
+//     "summary": "<summarize the criteria>",
+//     "results": {
+//         ${VALID_CAT.map(
+//             (cat) => `"${cat}": {
+//             "_id": <${cat} id>,
+//             "name": <${cat} name>,
+//         }`
+//         )}
+//     },
+//     "status": "<one of the following: questioning or recommending>"
+// }
+
+// {
+//     display: { type: String },
+//     cpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+//     cpuCooler: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+//     gpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+//     ram: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+//     psu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+//     motherboard: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+//     storage: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+//     accessories: [{ type: Schema.Types.ObjectId, ref: "Product", required: false }],
+// },
+
 async function makeRecommendation(chat, messages, botMessage) {
     const recProducts = await getRecommendation(botMessage.criteria);
     messages[0] = { role: "system", content: `${CHAT_CONTEXT_REC}\n\nPRODUCTS LIST ${JSON.stringify(recProducts)}` };
     try {
         const botMessage = await obtainChatResponse(messages);
-        const content = `${botMessage.response.content}${botMessage.response.content && botMessage.summary ? "\n\n" : ""}${
-            botMessage.summary ? `Current summary: ${botMessage.summary}` : ""
-        }`;
+        const content = `${botMessage.response.content}${botMessage.response.content && botMessage.summary ? "\n\n" : ""}${botMessage.summary ? `Current summary: ${botMessage.summary}` : ""}`;
         //TODO: optimize to do one push to the server and also not create so many references
         await addMessageToChat("assistant", content, chat.creator, chat, null, false);
         await addMessageToChat("system", JSON.stringify(botMessage), chat.creator, chat, null, false);
-        await chat.save();
 
         console.log("recommendation results", botMessage);
+        const recommendation = {
+            display: `${new Date().toLocaleDateString().replace(/\//g, "_")}-rec`,
+            ...Object.keys(botMessage.results).reduce((acc, key) => {
+                acc[key] = botMessage.results[key]._id;
+                return acc;
+            }, {}),
+        };
+        const re2 = chat.recommendation.push(recommendation);
+        await chat.save();
 
         return content;
     } catch (error) {
@@ -111,8 +143,7 @@ async function makeRecommendation(chat, messages, botMessage) {
     }
 }
 
-
-// ============================================ 
+// ============================================
 // Chat Agent API
 // ============================================
 exports.processRecommendation = async (req, res) => {
@@ -126,7 +157,6 @@ exports.processRecommendation = async (req, res) => {
         return res.status(500).json({ status: "fail", status_message: err._message });
     }
 };
-
 
 
 exports.testRec = async (req, res) => {
