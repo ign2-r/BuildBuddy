@@ -80,10 +80,116 @@ const Chatbot = () => {
         } finally {
             setIsLoading(false);
         }
-    };
 
-    return (
-        <Box
+        const getChat: Chat = (await response.json()).chat[0];
+        setChat(getChat);
+        setMessages(
+          (getChat.messages || [])
+            .filter((msg) => msg.role === 'assistant' || msg.role === 'user')
+            .map((msg) => ({
+              role: msg.role || 'assistant',
+              content: msg.content || '',
+              createdAt: msg.createdAt,
+            }))
+        );
+      } catch (error) {
+        console.error('Error fetching chat:', error);
+      }
+    };
+    fetchChat();
+  }, [userId]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (userInput.trim() === '') return;
+
+    const MAX_MESSAGES = 14;
+    const totalMessages = messages.filter(
+      (m) => m.role === 'user' || m.role === 'assistant'
+    ).length;
+
+    if (totalMessages >= MAX_MESSAGES) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: '❌ You’ve reached the message limit for this conversation.' },
+      ]);
+      setUserInput('');
+      return;
+    }
+
+    const userMessage = { role: 'user', content: userInput };
+    setMessages((prev) => [...prev, userMessage]);
+    setUserInput('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/recommend`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chatId: chat?._id, userId: userId, message: userInput }),
+      });
+
+      if (!response.ok) {
+        const errorDetails = await response.text();
+        console.error('Backend API Error:', errorDetails);
+        setMessages((prev) => [...prev, { role: 'assistant', content: `Error: ${errorDetails}` }]);
+        setIsLoading(false);
+        return;
+      }
+
+      const data = (await response.json()).message;
+      console.log('🧠 Full bot response:', data);
+
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.content }]);
+
+      if (data.all?.results && setRecommendations) {
+        console.log('📦 Setting recommendations:', data.all.results);
+        setRecommendations(data.all.results);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setMessages((prev) => [...prev, { role: 'assistant', content: 'Error connecting to the server.' }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        flexGrow: 1,
+        minHeight: 0,
+        height: '100%',
+      }}
+    >
+      <Typography variant="h6" color="primary" fontWeight={600} sx={{ mb: 1 }}>
+        💬 Chatassistant
+      </Typography>
+
+      <Box
+        ref={scrollRef}
+        sx={{
+          flexGrow: 1,
+          overflowY: 'auto',
+          p: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          bgcolor: 'grey.100',
+          borderRadius: 2,
+          boxShadow: 1,
+          minHeight: 0,
+        }}
+      >
+        {messages.map((msg, index) => (
+          <Box
+            key={index}
             sx={{
                 display: "flex",
                 flexDirection: "column",

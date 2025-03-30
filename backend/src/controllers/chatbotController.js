@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const Chat = require("../database/model/Chat");
 
 const { addMessageToChat, getRecommendation } = require("../database/mongoHandler");
+
 const { CHAT_CONTEXT_REC } = require("../prompts/chatContext");
 
 dotenv.config();
@@ -48,6 +49,7 @@ async function obtainChatResponse(messages) {
     }
 }
 
+
 // ============================================
 // Chatbot Logic Functions
 // ============================================
@@ -85,6 +87,7 @@ async function parseUserMessage(chatId, userId, message) {
         return { status: "fail", status_message: error.message, response: "Something went wrong, try again" };
     }
 }
+
 
 // {
 //     "response": { "role": "assistant", "content": "<content message as string>" },
@@ -154,6 +157,7 @@ exports.processRecommendation = async (req, res) => {
         return res.status(500).json({ status: "fail", status_message: err._message });
     }
 };
+
 
 exports.testRec = async (req, res) => {
     const { chatId, criteria } = req.body;
