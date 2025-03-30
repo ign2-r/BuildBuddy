@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const { Schema, model } = mongoose;
 const { createFromHexString } = mongoose.Types.ObjectId;
 
-
 const recommendationSchema = new mongoose.Schema(
     {
         display: { type: String },
