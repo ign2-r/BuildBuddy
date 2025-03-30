@@ -112,7 +112,7 @@ router.post("/addRandomProducts", async (req, res) => {
         const bulkOperations = dataFile.map((obj) => ({
             updateOne: {
                 filter: { name: obj.name, category: obj.category },
-                update: { $set: obj },
+                update: { $set: { ...obj } }, // Ensure obj is spread into an object
                 upsert: true,
             },
         }));

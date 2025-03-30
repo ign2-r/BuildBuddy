@@ -2,6 +2,21 @@ const mongoose = require("mongoose");
 const { Schema, model } = mongoose;
 const { createFromHexString } = mongoose.Types.ObjectId;
 
+const recommendationSchema = new mongoose.Schema(
+    {
+        display: { type: String },
+        cpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+        cpuCooler: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+        gpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+        ram: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+        psu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+        motherboard: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+        storage: { type: Schema.Types.ObjectId, ref: "Product", required: false },
+        accessories: [{ type: Schema.Types.ObjectId, ref: "Product", required: false }],
+    },
+    { timestamps: true, id: true }
+);
+
 const chatSchema = new mongoose.Schema(
     {
         display: { type: String, required: true },
@@ -9,20 +24,7 @@ const chatSchema = new mongoose.Schema(
         archived: { type: Boolean, default: false },
         messages: { type: [{ type: Schema.Types.ObjectId, ref: "Message" }], default: [] },
         recommendation: {
-            type: [
-                {
-                    createdAt: { type: Date, default: new Date(), immutable: true },
-                    display: { type: String },
-                    cpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-                    cpuCooler: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-                    gpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-                    ram: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-                    psu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-                    motherboard: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-                    storage: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-                    accessories: [{ type: Schema.Types.ObjectId, ref: "Product", required: false }],
-                },
-            ],
+            type: [recommendationSchema],
             default: [],
         },
     },

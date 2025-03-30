@@ -3,9 +3,8 @@
 import { Box, Typography, Card, CardContent, CardActions, Button } from '@mui/material';
 
 type Part = {
-  _id: string;
   name: string;
-  price?: number;
+  msrpPrice?: number;
   link?: string;
 };
 
@@ -14,9 +13,14 @@ type RecommendationPanelProps = {
 };
 
 const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ results }) => {
-  const parts = Object.entries(results || {});
+  console.log(results);
+  const parts = Object.entries(results)
+    .filter(([category]) => !["_id", "display", "createdAt", "updatedAt"].includes(category))
+    .map(([category, part]) => [category, part as Part]);
+
+
   const total = parts.reduce((acc, [_, part]) => {
-    const price = typeof part.price === 'number' ? part.price : parseFloat(part.price || '0');
+    const price = typeof part.msrpPrice === 'number' ? part.msrpPrice : parseFloat(part.msrpPrice || '0');
     return acc + (isNaN(price) ? 0 : price);
   }, 0);  
 
@@ -27,11 +31,11 @@ const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ results }) =>
       </Typography>
 
       {parts.map(([category, part]) => (
-        <Card key={part._id || category} sx={{ mb: 2, bgcolor: '#2e2e2e', color: 'white' }}>
+        <Card key={`${part._id}_${category}`} sx={{ mb: 2, bgcolor: '#2e2e2e', color: 'white' }}>
           <CardContent>
             <Typography variant="h6" gutterBottom>{category.toUpperCase()}</Typography>
             <Typography>{part.name}</Typography>
-            {part.price && <Typography>💵 ${part.price.toFixed(2)}</Typography>}
+            {part.msrpPrice && <Typography>💵 ${part.msrpPrice.toFixed(2)}</Typography>}
           </CardContent>
           {part.link && (
             <CardActions>

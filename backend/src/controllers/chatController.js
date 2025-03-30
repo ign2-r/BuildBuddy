@@ -55,6 +55,8 @@ exports.resetChat = async (req, res) => {
             await Message.deleteMany({ _id: chat.messages });
             chat.messages = [];
         }
+        chat.recommendation = [];
+        await chat.save();
 
         //TODO: Optimize to make both in one call
         const message = await addMessageToChat("system", CHAT_CONTEXT, userId, chat);

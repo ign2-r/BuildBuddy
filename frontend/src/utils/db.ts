@@ -80,7 +80,12 @@ export interface Chat {
     createdAt?: Date;
     updatedAt?: Date;
     messages?: Message[];
-    recommendation?: {
+    recommendation: Recommendation[];
+}
+
+export interface Recommendation {
+        _id: string,
+        display: string
         createdAt?: Date;
         cpu?: string | Product;
         gpu?: string | Product;
@@ -89,5 +94,4 @@ export interface Chat {
         motherboard?: string | Product;
         storage?: string | Product;
         accessories?: string[] | Product[];
-    }[];
 }

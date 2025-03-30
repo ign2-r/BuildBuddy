@@ -1,13 +1,16 @@
 'use client';
 
 import { Box } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Chatbot from '../../components/Chatbot';
 import RecommendationPanel from '../../components/RecommendationPanel';
 import Navbar from '../../components/Navbar';
 
 export default function HomePage() {
   const [recommendations, setRecommendations] = useState({});
+  useEffect(() => {
+    console.log(recommendations);
+  }, [recommendations]);
 
   return (
     <Box height="100vh" display="flex" flexDirection="column" overflow="hidden">

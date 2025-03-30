@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useState, useRef } from 'react';
 import { Box, Typography, Paper, TextField, Button } from '@mui/material';
@@ -46,6 +46,9 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
               createdAt: msg.createdAt,
             }))
         );
+        if (getChat.recommendation.length >0 && setRecommendations){
+             setRecommendations((getChat.recommendation ?? []).at(-1) ?? {});
+        }
       } catch (error) {
         console.error('Error fetching chat:', error);
       }
@@ -70,7 +73,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
     if (totalMessages >= MAX_MESSAGES) {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: '❌ You’ve reached the message limit for this conversation.' },
+        { role: 'assistant', content: '❌ You\'ve reached the message limit for this conversation.' },
       ]);
       setUserInput('');
       return;
@@ -101,9 +104,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
 
       setMessages((prev) => [...prev, { role: 'assistant', content: data.content }]);
 
-      if (data.all?.results && setRecommendations) {
-        console.log('📦 Setting recommendations:', data.all.results);
-        setRecommendations(data.all.results);
+      if (data.recommendation && setRecommendations) {
+        console.log('📦 Setting recommendations:', data.recommendation);
+        setRecommendations(data.recommendation);
+      } else if (setRecommendations){
+        setRecommendations({});
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -182,6 +187,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
           placeholder="Type a message..."
           disabled={isLoading}
           autoComplete="off"
+          inputRef={(input) => {
+            if (input && !isLoading) {
+                input.focus();
+            }
+        }}
           slotProps={{
             input: {
               inputProps: {
