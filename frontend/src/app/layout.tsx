@@ -6,6 +6,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import theme from "../utils/theme";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { SessionProvider } from "next-auth/react";
+import { ChatContextProvider } from "@/context/ChatContext";
 
 interface RootLayoutProps {
     children: ReactNode;
@@ -21,7 +22,9 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                 <AppRouterCacheProvider>
                     <ThemeProvider theme={theme}>
                         <CssBaseline />
-                        <SessionProvider>{children}</SessionProvider>
+                        <ChatContextProvider>
+                            <SessionProvider>{children}</SessionProvider>
+                        </ChatContextProvider>
                     </ThemeProvider>
                 </AppRouterCacheProvider>
             </body>

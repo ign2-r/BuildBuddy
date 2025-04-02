@@ -2,59 +2,17 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { Box, Typography, Paper, TextField, Button } from '@mui/material';
+import { useChatContext } from '@/context/ChatContext';
 import { useSession } from 'next-auth/react';
-import { Chat } from '@/utils/db';
 
-interface ChatbotProps {
-  setRecommendations?: (results: Record<string, any>) => void;
-}
 
-const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
-  const [chat, setChat] = useState<Chat>();
-  const [messages, setMessages] = useState([{ role: 'assistant', content: 'Hello! How can I assist you today?' }]);
+const Chatbot: React.FC  = () => {
+  const {isLoadingMain, messages, chat, setMessages, setRecommendations, setIsLoading} = useChatContext();
   const [userInput, setUserInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const { data: session } = useSession();
-  const userId = session?.user?._id;
+  const session = useSession();
+  const userId = session.data?.user?._id || null;
 
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const fetchChat = async () => {
-      if (!userId) return;
-
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get-chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: userId, create: true }),
-        });
-
-        if (!response.ok) {
-          console.error('Failed to fetch chat:', await response.text());
-          return;
-        }
-
-        const getChat: Chat = (await response.json()).chat[0];
-        setChat(getChat);
-        setMessages(
-          (getChat.messages || [])
-            .filter((msg) => msg.role === 'assistant' || msg.role === 'user')
-            .map((msg) => ({
-              role: msg.role || 'assistant',
-              content: msg.content || '',
-              createdAt: msg.createdAt,
-            }))
-        );
-        if (getChat.recommendation.length >0 && setRecommendations){
-             setRecommendations((getChat.recommendation ?? []).at(-1) ?? {});
-        }
-      } catch (error) {
-        console.error('Error fetching chat:', error);
-      }
-    };
-    fetchChat();
-  }, [userId]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -62,6 +20,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
     }
   }, [messages]);
 
+  // Handle sending
   const handleSend = async () => {
     if (userInput.trim() === '') return;
 
@@ -108,7 +67,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
         console.log('📦 Setting recommendations:', data.recommendation);
         setRecommendations(data.recommendation);
       } else if (setRecommendations){
-        setRecommendations({});
+        setRecommendations([]);
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -185,10 +144,10 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
           onChange={(e) => setUserInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           placeholder="Type a message..."
-          disabled={isLoading}
+          disabled={isLoadingMain}
           autoComplete="off"
           inputRef={(input) => {
-            if (input && !isLoading) {
+            if (input && !isLoadingMain) {
                 input.focus();
             }
         }}
@@ -203,8 +162,8 @@ const Chatbot: React.FC<ChatbotProps> = ({ setRecommendations }) => {
         <Typography variant="caption" sx={{ color: 'gray', mt: 1 }}>
           {userInput.length}/250
         </Typography>
-        <Button onClick={handleSend} variant="contained" sx={{ borderRadius: 3 }} disabled={isLoading}>
-          {isLoading ? '...' : 'Send'}
+        <Button onClick={handleSend} variant="contained" sx={{ borderRadius: 3 }} disabled={isLoadingMain}>
+          {isLoadingMain ? '...' : 'Send'}
         </Button>
       </Box>
     </Box>
