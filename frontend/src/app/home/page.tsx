@@ -25,7 +25,6 @@ export default function HomePage() {
     }, [session, setUser]);
 
     useEffect(() => {
-        console.debug(user._id);
         if (!user._id) {
             setDefault();
             return;
