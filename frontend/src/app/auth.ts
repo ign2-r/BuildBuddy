@@ -25,10 +25,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 if (credentials === null) return null;
 
                 try {
-                    let user = null;
-
-                    // logic to verify if the user exists
-                    user = await getUserFromDb(credentials.email as string, credentials.password as string);
+                    const user = await getUserFromDb(credentials.email as string, credentials.password as string);
 
                     if (!user) {
                         // No user found, so this is their first attempt to login
@@ -50,8 +47,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     // Callbacks used to add specific info needed from db
     callbacks: {
         async jwt({ token, user }) {
-            if (user?._id) token._id = user._id;
-            if (user?.role) token.role = user.role;
+            if (user) {
+                // If the token already has a user id and it doesn't match the new user,
+                // clear the token to force expiration
+                if (token._id && token._id !== user._id) {
+                token = {};
+            }
+            token._id = String(user._id);
+            token.role = user.role;
+        }
+            // console.debug("user:", user, "token:", token);
             return token;
         },
         async session({ session, token }) {

@@ -3,14 +3,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { Box, Typography, Paper, TextField, Button } from '@mui/material';
 import { useChatContext } from '@/context/ChatContext';
-import { useSession } from 'next-auth/react';
-
 
 const Chatbot: React.FC  = () => {
-  const {isLoadingMain, messages, chat, setMessages, setRecommendations, setIsLoading} = useChatContext();
+  const {isLoadingMain, messages, chat, setMessages, setRecommendations, setIsLoading, user} = useChatContext();
   const [userInput, setUserInput] = useState('');
-  const session = useSession();
-  const userId = session.data?.user?._id || null;
+  const userId = user._id;
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -24,7 +21,7 @@ const Chatbot: React.FC  = () => {
   const handleSend = async () => {
     if (userInput.trim() === '') return;
 
-    const MAX_MESSAGES = 14;
+    const MAX_MESSAGES = 100;
     const totalMessages = messages.filter(
       (m) => m.role === 'user' || m.role === 'assistant'
     ).length;
@@ -65,7 +62,7 @@ const Chatbot: React.FC  = () => {
 
       if (data.recommendation && setRecommendations) {
         console.log('📦 Setting recommendations:', data.recommendation);
-        setRecommendations(data.recommendation);
+        setRecommendations((prev) => [...prev, data.recommendation]);
       } else if (setRecommendations){
         setRecommendations([]);
       }

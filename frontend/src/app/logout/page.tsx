@@ -3,11 +3,13 @@
 import { useEffect } from 'react';
 import { doLogout } from "../actions";
 import { Button } from '@mui/material';
+import {useChatContext} from "@/context/ChatContext"
 
 export default function LogoutPage() {
-
+    const {setDefault} = useChatContext()
     useEffect(() => {
         const logout = async () => {
+            setDefault();
             await doLogout();
         };
         logout();

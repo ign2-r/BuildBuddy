@@ -34,7 +34,6 @@ exports.getChat = async (req, res) => {
     const { userId, create } = req.body;
     try {
         let chat = await Chat.getChatByUser(userId);
-        console.debug(chat, chat.length);
         // console.debug(create == true && chat.length == 0)
         if (create == true && chat.length == 0) chat = (await createChat(userId)).resChat;
         return res.status(201).json({ status: "success", status_message: ``, chat: chat });

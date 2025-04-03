@@ -1,6 +1,6 @@
 // context/MyContext.js
 // Ensure the Chat type is properly imported or defined
-import { Chat, Message, Recommendation } from "@/utils/db"; // Verify that Chat is exported from this module
+import { Chat, Message, Recommendation, User } from "@/utils/db"; // Verify that Chat is exported from this module
 import React, { createContext, useState, useContext } from "react";
 interface ChatContextType {
   chat: Chat | undefined;
@@ -11,6 +11,9 @@ interface ChatContextType {
   setRecommendations: React.Dispatch<React.SetStateAction<Recommendation[]>>;
   isLoadingMain: boolean;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  user: User;
+  setUser: React.Dispatch<React.SetStateAction<User>>;
+  setDefault: () => void;
 }
 
 type ContextProviderProps = {
@@ -23,9 +26,16 @@ export const ChatContextProvider = ({ children }: ContextProviderProps) => {
   const [messages, setMessages] = useState<Message[]>([{ role: 'assistant', content: 'Hello! How can I assist you today?' } as Message]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [isLoadingMain, setIsLoading] = useState(false);
-  const allItems = {
-    chat, setChat, messages, setMessages, recommendations, setRecommendations, isLoadingMain, setIsLoading
+  const [user, setUser] = useState<User>({} as User);
+  const setDefault = () => {
+    setChat({ _id: "", messages: [], recommendation: [], display: "", creator: "" });
+    setMessages([]);
+    setRecommendations([]);
   };
+  const allItems = {
+    chat, setChat, messages, setMessages, recommendations, setRecommendations, isLoadingMain, setIsLoading, user, setUser, setDefault
+  };
+
   return (
     <ChatContext.Provider value={allItems}>
       {children}

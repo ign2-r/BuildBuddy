@@ -38,7 +38,7 @@
 // Uncomment and if needed for adapters but may cause issues with packages
 
 export interface User {
-    _id?: string;
+    _id: string;
     budget_min?: number;
     budget_max?: number;
     email: string;
@@ -84,14 +84,14 @@ export interface Chat {
 }
 
 export interface Recommendation {
-        _id: string,
-        display: string
-        createdAt?: Date;
-        cpu?: string | Product;
-        gpu?: string | Product;
-        ram?: string | Product;
-        psu?: string | Product;
-        motherboard?: string | Product;
-        storage?: string | Product;
-        accessories?: string[] | Product[];
+    _id: string;
+    display: string;
+    createdAt?: Date;
+    cpu?: string | Product;
+    gpu?: string | Product;
+    ram?: string | Product;
+    psu?: string | Product;
+    motherboard?: string | Product;
+    storage?: string | Product;
+    accessories?: string[] | Product[];
 }
