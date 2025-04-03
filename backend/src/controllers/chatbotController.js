@@ -64,10 +64,12 @@ async function parseUserMessage(chatId, userId, message) {
     messages.push({ role: "user", content: message });
 
     try {
+        let recommendationItems = { content: null, recommendation: null };
         const botMessage = await obtainChatResponse(messages);
         let content = `${botMessage.response.content}${botMessage.response.content && botMessage.summary ? "\n\n" : ""}${botMessage.summary ? `Current summary: ${botMessage.summary}` : ""}`;
         if (botMessage.status == "recommending") {
-            content = await makeRecommendation(chat, messages, botMessage);
+            recommendationItems = await makeRecommendation(chat, messages, botMessage);
+            content = recommendationItems.content;
         } else {
             //TODO: optimize to do one push to the server and also not create so many references
             await addMessageToChat("assistant", content, userId, chat, null, false);
@@ -76,41 +78,20 @@ async function parseUserMessage(chatId, userId, message) {
             messages.push({ role: "user", content: message }, { role: "assistant", content: content }, { role: "system", content: botMessage });
         }
 
-        return {
+        const responsePayload = {
             status: "success",
-            response: { role: botMessage.response.role, content: content, all: botMessage },
+            response: { role: botMessage.response.role, content: content },
         };
+        if (recommendationItems.recommendation) {
+            responsePayload.response.recommendation = recommendationItems.recommendation;
+        }
+
+        return responsePayload;
     } catch (error) {
         console.error("🚨 Error parsing message:", error);
         return { status: "fail", status_message: error.message, response: "Something went wrong, try again" };
     }
 }
-
-// {
-//     "response": { "role": "assistant", "content": "<content message as string>" },
-//     "summary": "<summarize the criteria>",
-//     "results": {
-//         ${VALID_CAT.map(
-//             (cat) => `"${cat}": {
-//             "_id": <${cat} id>,
-//             "name": <${cat} name>,
-//         }`
-//         )}
-//     },
-//     "status": "<one of the following: questioning or recommending>"
-// }
-
-// {
-//     display: { type: String },
-//     cpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-//     cpuCooler: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-//     gpu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-//     ram: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-//     psu: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-//     motherboard: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-//     storage: { type: Schema.Types.ObjectId, ref: "Product", required: false },
-//     accessories: [{ type: Schema.Types.ObjectId, ref: "Product", required: false }],
-// },
 
 async function makeRecommendation(chat, messages, botMessage) {
     const recProducts = await getRecommendation(botMessage.criteria);
@@ -122,18 +103,24 @@ async function makeRecommendation(chat, messages, botMessage) {
         await addMessageToChat("assistant", content, chat.creator, chat, null, false);
         await addMessageToChat("system", JSON.stringify(botMessage), chat.creator, chat, null, false);
 
-        console.log("recommendation results", botMessage);
+        // console.log("recommendation results", botMessage);
+        // TODO optimize the calls to the server for the product
         const recommendation = {
             display: `${new Date().toLocaleDateString().replace(/\//g, "_")}-rec`,
-            ...Object.keys(botMessage.results).reduce((acc, key) => {
-                acc[key] = botMessage.results[key]._id;
-                return acc;
-            }, {}),
+            // items: {
+                ...Object.keys(botMessage.results).reduce((acc, key) => {
+                    if (botMessage.results[key]._id) {
+                        acc[key] = botMessage.results[key]._id;
+                    }
+                    return acc;
+                }, {}),
+            // },
         };
         const re2 = chat.recommendation.push(recommendation);
         await chat.save();
 
-        return content;
+
+        return { content: content, recommendation: (await Chat.findById(chat._id).withRecommendations()).recommendation.at(-1) };
     } catch (error) {
         console.error("🚨 Rec Error:", error);
         return { status: "fail", status_message: error.message, response: "Something went wrong, try again" };

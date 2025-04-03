@@ -123,7 +123,7 @@ chatSchema.statics.addRecommendation = function (chatId, cpuId, cpuCoolerId, gpu
  */
 chatSchema.statics.getChatByUser = function (uid) {
     return this.find({ creator: createFromHexString(uid) })
-        .withMessages()
+        .withMessagesMin()
         .withRecommendations();
 };
 
@@ -135,6 +135,18 @@ chatSchema.statics.getChatByUser = function (uid) {
  */
 chatSchema.query.withMessages = function () {
     return this.populate("messages").sort({ createdAt: 1 });
+};
+
+/**
+ * Query to add to search that populates the messages.
+ * @returns {Chat[]}
+ */
+chatSchema.query.withMessagesMin = function () {
+    return this.populate({
+        path: "messages",
+        match: { role: { $ne: "system" } },
+        options: { sort: { createdAt: 1 } }
+    }).lean();
 };
 
 /**

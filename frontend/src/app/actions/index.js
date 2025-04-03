@@ -5,6 +5,7 @@ import { signIn, signOut } from '../auth';
 
 export async function doLogout() {
     await signOut({ redirectTo: "/login" });
+    location.reload();
 }
 
 export async function doRegister(formData) {
@@ -24,7 +25,7 @@ export async function doCredentialLogin(formData) {
         const response = await signIn("credentials", {
             redirect: false,
             email: formData.get("email"),
-            password:  formData.get("password"),
+            password: formData.get("password"),
         });
         return response;
     }catch(e) {

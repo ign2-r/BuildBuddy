@@ -7,6 +7,7 @@ const { addMessageToChat } = require("../database/mongoHandler");
 const fs = require("fs");
 const { testRec } = require("../controllers/chatbotController");
 const {resetChat} = require("../controllers/chatController");
+const Message = require("../database/model/Message");
 
 dotenv.config();
 const router = express.Router();
@@ -85,7 +86,7 @@ router.get("/chat", async (req, res) => {
     const { chatId } = req.query;
 
     try {
-        const data = await Chat.findById(chatId);
+        const data = await Chat.findById(chatId).withMessages().withCreatorInfo();
         res.status(200).json({ chats: data, status: "success", status_message: "" });
     } catch (e) {
         console.error(e);
@@ -112,7 +113,7 @@ router.post("/addRandomProducts", async (req, res) => {
         const bulkOperations = dataFile.map((obj) => ({
             updateOne: {
                 filter: { name: obj.name, category: obj.category },
-                update: { $set: obj },
+                update: { $set: { ...obj } }, // Ensure obj is spread into an object
                 upsert: true,
             },
         }));
@@ -131,6 +132,18 @@ router.post("/addRec", async (req, res) => {
         // chatId, cpuId, gpuId, ramId, psuId, motherboardId, storageId, ...accessoriesIds
         const result = await Chat.addRecommendation("67b9421bdc98ff8f9541512e", "67bfd00a2ebfddd86b1ca550", "67bfd00a2ebfddd86b1ca54f", "67bfd00a2ebfddd86b1ca553"); //hardcoded
         res.status(200).json({ status: "success", status_message: `${result}` });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: "Internal Error" });
+    }
+});
+
+router.post("/purgeAllButProducts", async (req, res) => {
+    try {
+        await Chat.deleteMany({});
+        await User.deleteMany({});
+        await Message.deleteMany({});
+        res.status(200).json({ status: "success", status_message: `success` });
     } catch (e) {
         console.error(e);
         res.status(500).json({ message: "Internal Error" });

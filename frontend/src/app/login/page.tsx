@@ -5,7 +5,6 @@ import { Container, Box, TextField, Button, Typography, Link } from '@mui/materi
 import { doCredentialLogin } from "@/app/actions";
 import { useRouter } from 'next/navigation';
 
-
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,13 +18,12 @@ export default function LoginPage() {
     try {
       const formData = new FormData(e.currentTarget);
       const response = await doCredentialLogin(formData);
-
       if (!!response.error) {
         if (response.error === "Invalid credentials.") {
           setInvalid(true);
         }
       } else {
-      router.push("/home");
+        router.push("/home");
       }
     } catch (e) {
       console.error(e);

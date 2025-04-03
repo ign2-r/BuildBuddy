@@ -221,4 +221,4 @@ const Product = model("Product", productSchema);
 
 module.exports = Product;
 
-module.exports.VALID_CAT = ["cpu", "gpu", "memory", "power supply", "motherboard", "storage"];
+module.exports.VALID_CAT = ["cpu", "gpu", "memory", "psu", "motherboard", "storage"];
