@@ -16,6 +16,7 @@ const PCSelection: React.FC<PCSelectionProps> = ({ setIsDrawerOpen }) => {
         gpu: "",
         storage: "",
     });
+    console.log(pcConfig, " to be used") //TODO: Please remove
 
     const handleSelection = (key: string, value: string) => {
         setPcConfig((prev) => ({ ...prev, [key]: value }));

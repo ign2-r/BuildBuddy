@@ -15,6 +15,7 @@ export default function HomePage() {
 
     useEffect(() => {
         update();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -76,6 +77,7 @@ export default function HomePage() {
             }
         };
         fetchChat();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]);
 
     return (
