@@ -55,33 +55,42 @@ async function obtainChatResponse(messages) {
 async function parseUserMessage(chatId, userId, message) {
     console.log(`🛠 Sending request to GROQ API using SDK for ${userId} in ${chatId}`);
     let chat = await Chat.findById(chatId).withMessages();
-    const messages = chat.messages.map((message) => {
-        return { role: message.role, content: message.content };
-    });
+
+    const messages = chat.messages.map((message) => ({
+        role: message.role,
+        content: message.content,
+    }));
 
     const temp = await addMessageToChat("user", message, userId, chat, null, false);
-    if (temp.status != "success") throw new Error("Failed to process message");
+    if (temp.status !== "success") throw new Error("Failed to process message");
+
     messages.push({ role: "user", content: message });
 
     try {
         let recommendationItems = { content: null, recommendation: null };
         const botMessage = await obtainChatResponse(messages);
-        let content = `${botMessage.response.content}${botMessage.response.content && botMessage.summary ? "\n\n" : ""}${botMessage.summary ? `Current summary: ${botMessage.summary}` : ""}`;
-        if (botMessage.status == "recommending") {
+
+        let content = `${botMessage.response.content}${
+            botMessage.response.content && botMessage.summary ? "\n\n" : ""
+        }${botMessage.summary ? `Current summary: ${botMessage.summary}` : ""}`;
+
+        if (botMessage.status === "recommending") {
             recommendationItems = await makeRecommendation(chat, messages, botMessage);
             content = recommendationItems.content;
         } else {
-            //TODO: optimize to do one push to the server and also not create so many references
             await addMessageToChat("assistant", content, userId, chat, null, false);
             await addMessageToChat("system", JSON.stringify(botMessage), userId, chat, null, false);
             await chat.save();
-            messages.push({ role: "user", content: message }, { role: "assistant", content: content }, { role: "system", content: botMessage });
         }
 
         const responsePayload = {
             status: "success",
-            response: { role: botMessage.response.role, content: content },
+            response: {
+                role: botMessage.response.role,
+                content: content,
+            },
         };
+
         if (recommendationItems.recommendation) {
             responsePayload.response.recommendation = recommendationItems.recommendation;
         }
@@ -89,7 +98,11 @@ async function parseUserMessage(chatId, userId, message) {
         return responsePayload;
     } catch (error) {
         console.error("🚨 Error parsing message:", error);
-        return { status: "fail", status_message: error.message, response: "Something went wrong, try again" };
+        return {
+            status: "fail",
+            status_message: error.message,
+            response: "Something went wrong, try again",
+        };
     }
 }
 
