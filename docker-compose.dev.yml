@@ -1,0 +1,22 @@
+services:
+  database:
+    image: mongo:latest
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    networks:
+      - main
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: dev
+
+  core:
+    environment:
+      - DATABASE_URL=mongodb://database:27017/dev
+    depends_on:
+      - database
+  
+  web:
+    environment:
+      - MONGODB_URI=mongodb://database:27017/dev

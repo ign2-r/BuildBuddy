@@ -8,16 +8,15 @@
     import { Chat, Message, User } from "@/utils/db";
     import { useChatContext } from "@/context/ChatContext";
     import { useSession } from "next-auth/react";
-    import { useRouter } from "next/navigation";
 
     export default function HomePage() {
         const { chat, setChat, setMessages, setRecommendations, user, setUser, setDefault } = useChatContext();
         const { data: session, update } = useSession();
-        const router = useRouter();
 
-        useEffect(() => {
-            update();
-        }, []);
+    useEffect(() => {
+        update();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
         useEffect(() => {
             if (session?.user) {
@@ -79,6 +78,7 @@
             };
 
             fetchChat();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [user]);
 
         return (
