@@ -2,6 +2,8 @@ const express = require("express");
 const dotenv = require("dotenv");
 const { processRecommendation } = require("../controllers/chatbotController");
 const { createChat, getChat } = require("../controllers/chatController");
+const { getMessages } = require("../controllers/chatController");
+const { deleteChat } = require('../controllers/chatController');
 
 dotenv.config();
 const router = express.Router();
@@ -48,11 +50,14 @@ router.post("/chat", async (req, res) => {
 
 router.post("/create-chat", createChat);
 router.post("/get-chat", getChat);
+router.post('/delete-chat', deleteChat);
 
 router.post("/recommend", processRecommendation);
 router.get("/recommend", async (req, res) => {
     res.status(200).json({ response: "hi" });
 });
+
+router.get("/get-messages", getMessages);
 
 module.exports = router;
 

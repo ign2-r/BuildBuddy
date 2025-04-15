@@ -23,7 +23,7 @@ export default function LoginPage() {
           setInvalid(true);
         }
       } else {
-        router.push("/home");
+        router.push("/chats");
       }
     } catch (e) {
       console.error(e);
