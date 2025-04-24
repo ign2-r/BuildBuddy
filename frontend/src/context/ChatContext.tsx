@@ -11,7 +11,7 @@ interface ChatContextType {
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
-  setDefault: (logout: boolean) => void;
+  setDefault: (is_logout: boolean) => void;
 }
 
 type ContextProviderProps = {
@@ -29,11 +29,11 @@ export const ChatContextProvider = ({ children }: ContextProviderProps) => {
   const [isLoadingMain, setIsLoading] = useState(false);
   const [user, setUser] = useState<User |null>({} as User);
 
-  const setDefault = (logout: boolean = false) => {
+  const setDefault = (is_logout: boolean = false) => {
     setChat({ _id: "", messages: [], recommendation: [], display: "", creator: "" });
     setMessages([]);
     setRecommendations([]);
-    if(logout){
+    if(is_logout){
       setUser(null);
     }
   };

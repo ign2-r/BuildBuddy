@@ -25,9 +25,9 @@ export function DialogDeleteChat({open, setOpen,handleFunction, agreeText, disag
                     Logging out will sign you out of Buildbuddy and you will have to log in again.
                 </DialogContentText>
                 <DialogActions>
-                <Button onClick={handleClose} variant="contained" color="secondary">{agreeText}</Button>
+                <Button onClick={handleClose} variant="contained" color="secondary">{disagreeText}</Button>
                 <Button onClick={handleFunctionInternal} variant="contained" autoFocus>
-                    {disagreeText}
+                    {agreeText}
                 </Button>
                 </DialogActions>
             </DialogContent>

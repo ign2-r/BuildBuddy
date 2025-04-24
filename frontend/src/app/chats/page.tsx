@@ -50,7 +50,7 @@ export default function ChatsPage() {
 
       setChat(newChat);
       setMessages(newChat.messages || []);
-      router.push('/home');
+      router.push(`/home/${newChat._id}`);
     } catch (err) {
       console.error('Failed to create chat:', err);
     }
@@ -69,9 +69,9 @@ export default function ChatsPage() {
   };
 
   const deleteChat = async () => {
+    console.log("fixed");
     if(!selectedDeleteChat){
       throw new Error("Unkown chat to delete");
-      return;
     }
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/delete-chat`, {
       method: 'POST',
@@ -143,6 +143,7 @@ export default function ChatsPage() {
                 onClick={async (e) => {
                   e.stopPropagation();
                   setDeleteChat(chat);
+                  console.log("Remove");
                   setOpenDialog(true);
                 }}
               >

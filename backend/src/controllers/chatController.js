@@ -125,6 +125,26 @@ exports.getMessages = async (req, res) => {
     }
   };
 
+  exports.renameChat = async (req, res) => {
+    const { chatId, name } = req.body;
+  
+    try {
+      const chat = await Chat.findById(chatId);
+  
+      if (!chat) {
+        return res.status(404).json({ status: "fail", message: "Chat not found" });
+      }
+  
+      chat.set({ display: name });
+      await chat.save();
+  
+      return res.status(200).json({ status: "success" });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ status: "fail", message: err.message });
+    }
+  };
+
   exports.deleteChat = async (req, res) => {
     const { chatId } = req.body;
   

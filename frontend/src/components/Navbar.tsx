@@ -1,6 +1,6 @@
 'use client';
 
-import { signOut } from "next-auth/react"
+// import { signOut } from "next-auth/react"
 import { useChatContext } from '@/context/ChatContext';
 import { User } from '@/utils/db';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 
 const Navbar = () => {
     const { data: session } = useSession();
-    const { setUser } = useChatContext();
+    const { setUser, setDefault } = useChatContext();
     const [open, setopen] = useState(false);
     const router = useRouter();
     const pathname = usePathname();
@@ -19,20 +19,21 @@ const Navbar = () => {
     const sessionUser = session?.user;
 
     useEffect(() => {
-        if (sessionUser) {
+      if (pathname !== "/register" && pathname !== "/login" && pathname.includes("/api")) {
+        router.replace("/login");
+    } else if (sessionUser) {
             setUser(session?.user as User);
             if (pathname === "/register" || pathname === "/login") {
                 router.replace("/chats");
             }
-        } else {
-            router.replace("/login");
-        }
+          }
     }, [pathname, sessionUser]);
 
     const handleSignOut = async () => {
+        setDefault(true);
         setopen(false);
-        signOut();
-        // router.replace("/api/auth/signout");
+        // signOut(); //TODO: to fix it later
+        router.replace("/api/auth/signout");
     };
 
     const handleClose = () => {

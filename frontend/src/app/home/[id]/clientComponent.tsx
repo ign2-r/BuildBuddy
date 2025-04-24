@@ -12,7 +12,8 @@ import { useRouter } from "next/navigation";
 export function HomePage({chatId}: {chatId:string |null }) {
     const { update } = useSession();
     const { chat, setChat, setMessages, setRecommendations, user, setDefault } = useChatContext();
-    const router = useRouter();    
+    const router = useRouter();   
+    // const {currChatId, setChatId} = useState(chatId)
     const currChatId = chatId;
 
     useEffect(() => {
