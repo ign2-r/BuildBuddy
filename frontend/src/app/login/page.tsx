@@ -47,6 +47,7 @@ export default function LoginPage() {
             margin="normal"
             name="email"
             value={email}
+            
             onChange={(e) => setEmail(e.target.value)}
           />
           <TextField

@@ -7,7 +7,7 @@ import { useChatContext } from '@/context/ChatContext';
 const Chatbot: React.FC  = () => {
   const {isLoadingMain, messages, chat, setMessages, setRecommendations, setIsLoading, user} = useChatContext();
   const [userInput, setUserInput] = useState('');
-  const userId = user._id;
+  const userId = user?._id;
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -144,16 +144,16 @@ const Chatbot: React.FC  = () => {
           disabled={isLoadingMain}
           autoComplete="off"
           inputRef={(input) => {
-            if (input && !isLoadingMain) {
-                input.focus();
-            }
+        if (input && !isLoadingMain) {
+            input.focus();
+        }
         }}
           slotProps={{
-            input: {
-              inputProps: {
-                maxLength: 250,
-              },
-            },
+        input: {
+          inputProps: {
+            maxLength: 250,
+          },
+        },
           }}
         />
         <Typography variant="caption" sx={{ color: 'gray', mt: 1 }}>

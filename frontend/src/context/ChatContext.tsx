@@ -9,9 +9,9 @@ interface ChatContextType {
   setRecommendations: React.Dispatch<React.SetStateAction<Recommendation[]>>;
   isLoadingMain: boolean;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  user: User;
-  setUser: React.Dispatch<React.SetStateAction<User>>;
-  setDefault: () => void;
+  user: User | null;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  setDefault: (logout: boolean) => void;
 }
 
 type ContextProviderProps = {
@@ -27,12 +27,15 @@ export const ChatContextProvider = ({ children }: ContextProviderProps) => {
   ]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [isLoadingMain, setIsLoading] = useState(false);
-  const [user, setUser] = useState<User>({} as User);
+  const [user, setUser] = useState<User |null>({} as User);
 
-  const setDefault = () => {
+  const setDefault = (logout: boolean = false) => {
     setChat({ _id: "", messages: [], recommendation: [], display: "", creator: "" });
     setMessages([]);
     setRecommendations([]);
+    if(logout){
+      setUser(null);
+    }
   };
 
   const allItems = {

@@ -5,23 +5,18 @@ import { Box, Button, Typography, Card, CardContent, Grid } from '@mui/material'
 import { useRouter } from 'next/navigation';
 import { useChatContext } from '@/context/ChatContext';
 import { useSession } from 'next-auth/react';
-import { Message, Chat, User } from '@/utils/db';
+import { Chat } from '@/utils/db';
 
 export default function ChatsPage() {
   const [chats, setChats] = useState<Chat[]>([]);
-  const { user, setUser, setChat, setMessages } = useChatContext();
-  const { data: session, update } = useSession();
+  const { user, setChat, setMessages } = useChatContext();
+  const { update } = useSession();
   const router = useRouter();
 
   useEffect(() => {
     update();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (session?.user) {
-      setUser(session.user as User);
-    }
-  }, [session, setUser]);
 
   useEffect(() => {
     if (!user?._id) return;
@@ -60,56 +55,18 @@ export default function ChatsPage() {
 
   const openChat = async (chatId: string) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get-messages?chatId=${chatId}`);
-      const data = await res.json();
-      const messages: Message[] = data.messages;
+      if(!chatId){
 
-      const selectedChat = chats.find(c => c._id === chatId);
-      if (!selectedChat) return;
-
-      setChat({
-        ...selectedChat,
-        messages,
-      });
-
-      setMessages(
-        (messages ?? []).filter(
-          (msg: Message) =>
-            (msg.role === 'user' || msg.role === 'assistant') &&
-            typeof msg.content === 'string' &&
-            !msg.content.trim().startsWith('{')
-        )
-      );
-
-      router.push('/home');
+        throw new Error("Invalid Chat URL");
+      }
+      router.push(`/home/${chatId}`);
     } catch (err) {
       console.error('Failed to open chat:', err);
     }
   };
 
-  const handleSignOut = async () => {
-    const confirmed = window.confirm('Are you sure you want to sign out?');
-    if (!confirmed) return;
-
-    try {
-      await fetch('/api/auth/signout', {
-        method: 'GET',
-        credentials: 'include',
-      });
-      window.location.href = '/';
-    } catch (err) {
-      console.error('Failed to sign out:', err);
-    }
-  };
-
   return (
-    <Box sx={{ bgcolor: '#121212', minHeight: '100vh', p: 4 }}>
-      <Box display="flex" justifyContent="flex-end" mb={2}>
-        <Button variant="contained" color="error" onClick={handleSignOut}>
-          Sign Out
-        </Button>
-      </Box>
-
+    <Box sx={{ bgcolor: '#121212', minHeight: '100%', p: 4 }}>
       <Typography variant="h4" color="white" gutterBottom sx={{ textAlign: 'center', fontWeight: 'bold' }}>
         Your Chats
       </Typography>
@@ -119,7 +76,6 @@ export default function ChatsPage() {
           + New Chat
         </Button>
       </Box>
-
       <Grid container spacing={2}>
         {chats.map(chat => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={chat._id}>

@@ -88,9 +88,12 @@ exports.resetChat = async (req, res) => {
 
 exports.getMessages = async (req, res) => {
     const { chatId } = req.query;
+    // TODO: add authorization header to check if the user is the right person
     try {
       const chat = await Chat.findById(chatId).populate("messages");
       if (!chat) return res.status(404).json({ error: "Chat not found" });
+
+
   
       const filtered = chat.messages.filter((m) => {
         return (
