@@ -27,7 +27,7 @@ const Navbar = () => {
         } else {
             router.replace("/login");
         }
-    }, [pathname]);
+    }, [pathname, sessionUser]);
 
     const handleSignOut = async () => {
         setopen(false);

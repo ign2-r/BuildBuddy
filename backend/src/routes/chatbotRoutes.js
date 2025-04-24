@@ -1,7 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const { processRecommendation } = require("../controllers/chatbotController");
-const { createChat, getChat } = require("../controllers/chatController");
+const { createChat, getChat, getChatById } = require("../controllers/chatController");
 const { getMessages } = require("../controllers/chatController");
 const { deleteChat } = require('../controllers/chatController');
 
@@ -58,6 +58,7 @@ router.get("/recommend", async (req, res) => {
 });
 
 router.get("/get-messages", getMessages);
+router.get("/get-chat-id", getChatById);
 
 module.exports = router;
 

@@ -1,5 +1,7 @@
 import {HomePage} from "./clientComponent";
 
+// TODO: move chat call here
+
 export default async function HomeServerside({
     params,
   }: {

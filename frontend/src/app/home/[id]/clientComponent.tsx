@@ -43,10 +43,9 @@ export function HomePage({chatId}: {chatId:string |null }) {
 
         const fetchChat = async () => {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get-chat`, {
-                    method: "POST",
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get-chat-id?chatId=${currChatId}`, {
+                    method: "GET",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ userId: user._id, create: true }),
                 });
 
                 if (!res.ok) {
@@ -55,13 +54,13 @@ export function HomePage({chatId}: {chatId:string |null }) {
                 }
 
                 const data = await res.json();
-                const getChat: Chat = data.chat[0];
+                const getChat: Chat = data.chat;
 
                 if (!getChat) {
                     setDefault(false);
                     return;
                 }
-
+                console.debug(getChat);
                 setChat(getChat);
                 setMessages(
                     (getChat?.messages ?? [])

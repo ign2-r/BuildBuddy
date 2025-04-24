@@ -19,7 +19,7 @@ function obtainAIAgent() {
     if (!GROQ_API_KEY) {
         throw new Error("Missing AI API Key");
     }
-    return new OpenAI({ apiKeys: process.env.GROQ_API_KEY, baseURL: process.env.AI_BASE_URL });
+    return new OpenAI({ apiKey: process.env.GROQ_API_KEY, baseURL: process.env.AI_BASE_URL });
 }
 
 async function obtainChatResponse(messages) {

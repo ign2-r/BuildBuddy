@@ -6,10 +6,13 @@ import { useRouter } from 'next/navigation';
 import { useChatContext } from '@/context/ChatContext';
 import { useSession } from 'next-auth/react';
 import { Chat } from '@/utils/db';
+import DialogDeleteChat from '@/components/DialogDeleteChat';
 
 export default function ChatsPage() {
   const [chats, setChats] = useState<Chat[]>([]);
   const { user, setChat, setMessages } = useChatContext();
+  const [selectedDeleteChat, setDeleteChat] = useState<Chat|null>(null)
+  const [openDialog, setOpenDialog] = useState(false);
   const { update } = useSession();
   const router = useRouter();
 
@@ -65,6 +68,24 @@ export default function ChatsPage() {
     }
   };
 
+  const deleteChat = async () => {
+    if(!selectedDeleteChat){
+      throw new Error("Unkown chat to delete");
+      return;
+    }
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/delete-chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chatId: selectedDeleteChat._id }),
+    });
+
+    if (res.ok) {
+      setChats(prev => prev.filter(c => c._id !== selectedDeleteChat._id));
+    } else {
+      alert('Failed to delete chat.');
+    }
+  }
+
   return (
     <Box sx={{ bgcolor: '#121212', minHeight: '100%', p: 4 }}>
       <Typography variant="h4" color="white" gutterBottom sx={{ textAlign: 'center', fontWeight: 'bold' }}>
@@ -76,6 +97,7 @@ export default function ChatsPage() {
           + New Chat
         </Button>
       </Box>
+      <DialogDeleteChat agreeText='Delete' disagreeText='Cancel' open={openDialog} setOpen={setOpenDialog} handleFunction={deleteChat}/>
       <Grid container spacing={2}>
         {chats.map(chat => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={chat._id}>
@@ -120,20 +142,8 @@ export default function ChatsPage() {
                 }}
                 onClick={async (e) => {
                   e.stopPropagation();
-                  const confirmed = confirm('Delete this chat?');
-                  if (!confirmed) return;
-
-                  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/delete-chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chatId: chat._id }),
-                  });
-
-                  if (res.ok) {
-                    setChats(prev => prev.filter(c => c._id !== chat._id));
-                  } else {
-                    alert('Failed to delete chat.');
-                  }
+                  setDeleteChat(chat);
+                  setOpenDialog(true);
                 }}
               >
                 🗑️

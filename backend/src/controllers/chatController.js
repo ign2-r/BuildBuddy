@@ -111,6 +111,20 @@ exports.getMessages = async (req, res) => {
     }
   };
 
+  exports.getChatById = async (req, res) => {
+    const { chatId } = req.query;
+    // TODO: add authorization header to check if the user is the right person
+    try {
+      const chat = await Chat.findById(chatId).withMessagesMin().withRecommendations();
+      if (!chat) return res.status(404).json({ error: "Chat not found" });
+  
+      return res.status(200).json({ chat: chat });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  };
+
   exports.deleteChat = async (req, res) => {
     const { chatId } = req.body;
   
