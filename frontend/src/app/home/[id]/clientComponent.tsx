@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 
 export function HomePage({chatId}: {chatId:string |null }) {
     const { update } = useSession();
-    const { chat, setChat, setMessages, setRecommendations, user, setDefault } = useChatContext();
+    const { setChat, setMessages, setRecommendations, user, setDefault } = useChatContext();
     const router = useRouter();   
     // const {currChatId, setChatId} = useState(chatId)
     const currChatId = chatId;
@@ -30,13 +30,6 @@ export function HomePage({chatId}: {chatId:string |null }) {
     }, [currChatId, router]);
 
     useEffect(() => {
-        // if a chat is already selected from /chats, don't override
-        if (chat?._id) {
-            setMessages(chat.messages ?? []);
-            setRecommendations(chat.recommendation ?? []);
-            return;
-        }
-
         if (!user?._id) {
             setDefault(false);
             return;
@@ -83,7 +76,7 @@ export function HomePage({chatId}: {chatId:string |null }) {
 
         fetchChat();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user]);
+    }, [user, currChatId, chatId]);
 
     return (
         <Box height="100%" display="flex" flexDirection="column" overflow="hidden">
