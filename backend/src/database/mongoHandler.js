@@ -3,16 +3,6 @@ const Chat = require("./model/Chat");
 const Message = require("./model/Message");
 const Product = require("./model/Product");
 
-const connectDB = async () => {
-    try {
-        await mongoose.connect(process.env.DATABASE_URL);
-        console.log("MongoDB Connected...");
-    } catch (error) {
-        console.error("MongoDB connection failed:", error);
-        process.exit(1);
-    }
-};
-
 const addMessageToChat = async (role, content, userId, currChat = null, chatId = null, setChat = true) => {
     try {
         if (!currChat && chatId) {
@@ -74,4 +64,4 @@ const getRecommendation = async (criteria) => {
     }
 };
 
-module.exports = { connectDB, addMessageToChat, getRecommendation };
+module.exports = { addMessageToChat, getRecommendation };
