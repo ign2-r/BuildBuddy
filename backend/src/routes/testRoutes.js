@@ -6,7 +6,7 @@ const Product = require("../database/model/Product");
 const { addMessageToChat } = require("../database/mongoHandler");
 const fs = require("fs");
 const { testRec } = require("../controllers/chatbotController");
-const {resetChat} = require("../controllers/chatController");
+const { resetChat } = require("../controllers/chatController");
 const Message = require("../database/model/Message");
 
 dotenv.config();
@@ -24,7 +24,11 @@ router.get("/database", async (req, res) => {
 router.get("/allChat", async (req, res) => {
     try {
         const data = await Chat.getAll().exec();
-        res.status(200).json({ chats: data, status: "success", status_message: "" });
+        res.status(200).json({
+            chats: data,
+            status: "success",
+            status_message: "",
+        });
     } catch (e) {
         console.error(e);
         res.status(500).json({ message: "Internal Error" });
@@ -36,7 +40,11 @@ router.get("/userChats", async (req, res) => {
 
     try {
         const data = await Chat.getChatByUser(uid).exec();
-        res.status(200).json({ chats: data, status: "success", status_message: "" });
+        res.status(200).json({
+            chats: data,
+            status: "success",
+            status_message: "",
+        });
     } catch (e) {
         console.error(e);
         res.status(500).json({ message: "Internal Error" });
@@ -63,7 +71,10 @@ router.post("/database", async (req, res) => {
     await addMessageToChat(savedChat._id, "Hello there", true, savedUser._id);
     await addMessageToChat(savedChat._id, "Hello there user", false, null);
 
-    res.status(201).json({ status: "error", message: "Test data created successfully" });
+    res.status(201).json({
+        status: "error",
+        message: "Test data created successfully",
+    });
 });
 
 router.post("/addmsg", async (req, res) => {
@@ -71,14 +82,22 @@ router.post("/addmsg", async (req, res) => {
     const { chatId, message, isSystem, userId } = req.body;
     try {
         addMessageToChat(chatId, message, isSystem, userId).then((result) => {
-            if (result.status == "success") res.status(201).json({ chats: data, status: "success", status_message: "Message created" });
+            if (result.status == "success")
+                res.status(201).json({
+                    chats: data,
+                    status: "success",
+                    status_message: "Message created",
+                });
             else {
                 res.status(400).json(result);
             }
         });
     } catch (e) {
         console.error(e);
-        res.status(500).json({ status: "error", message: "Internal Server Error: Test message" });
+        res.status(500).json({
+            status: "error",
+            message: "Internal Server Error: Test message",
+        });
     }
 });
 
@@ -86,8 +105,14 @@ router.get("/chat", async (req, res) => {
     const { chatId } = req.query;
 
     try {
-        const data = await Chat.findById(chatId).withMessages().withCreatorInfo();
-        res.status(200).json({ chats: data, status: "success", status_message: "" });
+        const data = await Chat.findById(chatId)
+            .withMessages()
+            .withCreatorInfo();
+        res.status(200).json({
+            chats: data,
+            status: "success",
+            status_message: "",
+        });
     } catch (e) {
         console.error(e);
         res.status(500).json({ status: "error", message: "Internal Error" });
@@ -99,7 +124,11 @@ router.get("/recommendations", async (req, res) => {
 
     try {
         const data = await Chat.getUserRecommendation(userId).exec();
-        res.status(200).json({ chats: data, status: "success", status_message: "" });
+        res.status(200).json({
+            chats: data,
+            status: "success",
+            status_message: "",
+        });
     } catch (e) {
         console.error(e);
         res.status(500).json({ message: "Internal Error" });
@@ -127,11 +156,28 @@ router.post("/addRandomProducts", async (req, res) => {
 });
 
 router.post("/addRec", async (req, res) => {
-    const { chatId, cpuId, gpuId, ramId, psuId, motherboardId, storageId, accessoriesIds } = req.query;
+    const {
+        chatId,
+        cpuId,
+        gpuId,
+        ramId,
+        psuId,
+        motherboardId,
+        storageId,
+        accessoriesIds,
+    } = req.query;
     try {
         // chatId, cpuId, gpuId, ramId, psuId, motherboardId, storageId, ...accessoriesIds
-        const result = await Chat.addRecommendation("67b9421bdc98ff8f9541512e", "67bfd00a2ebfddd86b1ca550", "67bfd00a2ebfddd86b1ca54f", "67bfd00a2ebfddd86b1ca553"); //hardcoded
-        res.status(200).json({ status: "success", status_message: `${result}` });
+        const result = await Chat.addRecommendation(
+            "67b9421bdc98ff8f9541512e",
+            "67bfd00a2ebfddd86b1ca550",
+            "67bfd00a2ebfddd86b1ca54f",
+            "67bfd00a2ebfddd86b1ca553"
+        ); //hardcoded
+        res.status(200).json({
+            status: "success",
+            status_message: `${result}`,
+        });
     } catch (e) {
         console.error(e);
         res.status(500).json({ message: "Internal Error" });

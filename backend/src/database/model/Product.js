@@ -50,20 +50,38 @@ const productSchema = new Schema(
  * @param {number} price - price for the product without discounts.
  * @param {number} discountPrice - discounted price.
  */
-productSchema.statics.updateLink = async function (productId, name = null, url, rating, vendor, price, discountPrice) {
+productSchema.statics.updateLink = async function (
+    productId,
+    name = null,
+    url,
+    rating,
+    vendor,
+    price,
+    discountPrice
+) {
     try {
         const updateFields = { url: url, vendor: vendor };
-        if (rating !== null && rating !== undefined) updateFields.rating = rating;
+        if (rating !== null && rating !== undefined)
+            updateFields.rating = rating;
         if (price !== null && price !== undefined) updateFields.price = price;
-        if (discountPrice !== null && discountPrice !== undefined) updateFields.discountPrice = discountPrice;
+        if (discountPrice !== null && discountPrice !== undefined)
+            updateFields.discountPrice = discountPrice;
 
         let result = { modifiedCount: -1 };
         if (productId) {
-            result = await this.updateOne({ _id: createFromHexString(productId) }, { $push: { links: updateFields } });
+            result = await this.updateOne(
+                { _id: createFromHexString(productId) },
+                { $push: { links: updateFields } }
+            );
         } else if (name) {
-            result = await this.updateOne({ name: name }, { $push: { links: updateFields } });
+            result = await this.updateOne(
+                { name: name },
+                { $push: { links: updateFields } }
+            );
         } else {
-            throw new Error("Missing name or productID for updating product spec");
+            throw new Error(
+                "Missing name or productID for updating product spec"
+            );
         }
 
         if (result.modifiedCount > 0) {
@@ -83,7 +101,10 @@ productSchema.statics.updateLink = async function (productId, name = null, url, 
  */
 productSchema.statics.removeLink = async function (productId, url) {
     try {
-        const result = await this.updateOne({ _id: createFromHexString(productId) }, { $pull: { links: { url: url } } });
+        const result = await this.updateOne(
+            { _id: createFromHexString(productId) },
+            { $pull: { links: { url: url } } }
+        );
 
         if (result.modifiedCount > 0) {
             console.log(`Successfully removed item with ID: ${productId}`);
@@ -106,23 +127,43 @@ productSchema.statics.removeLink = async function (productId, url) {
  * @param {boolean} overclock - Overclock capability.
  * @param {string[]} other - Other specifications (e.g., storage read/write, RAM size).
  */
-productSchema.statics.addSpec = async function (productId, name = null, speed, wattageUse, size, requirements, overclock, other) {
+productSchema.statics.addSpec = async function (
+    productId,
+    name = null,
+    speed,
+    wattageUse,
+    size,
+    requirements,
+    overclock,
+    other
+) {
     try {
         const updateFields = {};
         if (speed !== null && speed !== undefined) updateFields.speed = speed;
-        if (wattageUse !== null && wattageUse !== undefined) updateFields.wattageUse = wattageUse;
+        if (wattageUse !== null && wattageUse !== undefined)
+            updateFields.wattageUse = wattageUse;
         if (size !== null && size !== undefined) updateFields.size = size;
-        if (requirements !== null && requirements !== undefined) updateFields.requirements = requirements;
-        if (overclock !== null && overclock !== undefined) updateFields.overclock = overclock;
+        if (requirements !== null && requirements !== undefined)
+            updateFields.requirements = requirements;
+        if (overclock !== null && overclock !== undefined)
+            updateFields.overclock = overclock;
         if (other !== null && other !== undefined) updateFields.other = other;
 
         let result = { modifiedCount: -1 };
         if (productId) {
-            result = await this.updateOne({ _id: createFromHexString(productId) }, { $push: { specs: updateFields } });
+            result = await this.updateOne(
+                { _id: createFromHexString(productId) },
+                { $push: { specs: updateFields } }
+            );
         } else if (name) {
-            result = await this.updateOne({ name: name }, { $push: { specs: updateFields } });
+            result = await this.updateOne(
+                { name: name },
+                { $push: { specs: updateFields } }
+            );
         } else {
-            throw new Error("Missing name or productID for updating product spec");
+            throw new Error(
+                "Missing name or productID for updating product spec"
+            );
         }
 
         if (result.modifiedCount > 0) {
@@ -141,7 +182,9 @@ productSchema.statics.addSpec = async function (productId, name = null, speed, w
  * @param {number} limit the amount of returns - optional, default 25.
  */
 productSchema.statics.getCategory = function (category, limit = 25) {
-    return this.find({ category: category }).limit(limit);
+    return this.find({ category: category })
+        .sort({ releaseDate: -1 })
+        .limit(limit);
 };
 
 /**
@@ -162,32 +205,41 @@ productSchema.statics.findByName = function (product) {
     return this.find({ name: new RegExp(name, "i") });
 };
 
-productSchema.statics.recSearch = function (category, minPrice, maxPrice, keywords) {
-    const pipeline = {
-        category: category,
-        msrpPrice: {
-            $gte: minPrice,
-            $lte: maxPrice,
+productSchema.statics.recSearch = function (
+    category,
+    minPrice,
+    maxPrice,
+    keywords
+) {
+    const pipeline = [
+        {
+            $match: {
+                category: category,
+                msrpPrice: {
+                    $gte: minPrice,
+                    $lte: maxPrice,
+                },
+                $or: [
+                    {
+                        name: {
+                            $in: keywords.map((k) => new RegExp(k, "i")),
+                        },
+                    },
+                    {
+                        brand: {
+                            $in: keywords.map((k) => new RegExp(k, "i")),
+                        },
+                    },
+                    {
+                        "specs.other": {
+                            $in: keywords.map((k) => new RegExp(k, "i")),
+                        },
+                    },
+                ],
+            },
         },
-        $or: [
-            {
-                name: {
-                    $in: keywords,
-                },
-            },
-            {
-                brand: {
-                    $in: keywords,
-                },
-            },
-            {
-                "specs.other": {
-                    $in: keywords,
-                },
-            },
-        ],
-    };
-    return this.aggregate([{ $match: pipeline }]);
+    ];
+    return this.aggregate(pipeline);
 };
 
 // ===========================================Queries================================================
@@ -198,7 +250,9 @@ productSchema.statics.recSearch = function (category, minPrice, maxPrice, keywor
  * @returns {Product}
  */
 productSchema.query.msrpPriceRange = function (minPrice, maxPrice) {
-    return this.find({ msrpPrice: { $gte: minPrice, $lte: maxPrice } }).sort({ msrpPrice: 1 });
+    return this.find({ msrpPrice: { $gte: minPrice, $lte: maxPrice } }).sort({
+        msrpPrice: 1,
+    });
 };
 
 /**
@@ -208,7 +262,11 @@ productSchema.query.msrpPriceRange = function (minPrice, maxPrice) {
  */
 productSchema.query.searchByKeywords = function (keywords) {
     const query = {
-        $or: [{ name: { $in: keywords } }, { brand: { $in: keywords } }, { "specs.other": { $in: keywords } }],
+        $or: [
+            { name: { $in: keywords.map((k) => new RegExp(k, "i")) } },
+            { brand: { $in: keywords.map((k) => new RegExp(k, "i")) } },
+            { "specs.other": { $in: keywords.map((k) => new RegExp(k, "i")) } },
+        ],
     };
 
     if (keywords.length === 0) {
@@ -221,4 +279,11 @@ const Product = model("Product", productSchema);
 
 module.exports = Product;
 
-module.exports.VALID_CAT = ["cpu", "gpu", "memory", "psu", "motherboard", "storage"];
+module.exports.VALID_CAT = [
+    "cpu",
+    "gpu",
+    "memory",
+    "psu",
+    "motherboard",
+    "storage",
+];
