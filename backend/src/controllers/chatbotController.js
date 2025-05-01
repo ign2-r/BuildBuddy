@@ -6,6 +6,7 @@ const Chat = require("../database/model/Chat");
 const {
     addMessageToChat,
     getRecommendation,
+    getAdvancedRecommendation,
 } = require("../database/mongoHandler");
 const { CHAT_CONTEXT_REC } = require("../prompts/chatContext");
 const { VALID_CAT } = require("../database/model/Product");
@@ -62,23 +63,30 @@ function obtainAIAgent() {
     });
 }
 
-async function obtainChatResponse(messages) {
+async function obtainChatResponse(messages, withTools) {
     const client = obtainAIAgent();
     const AI_model = process.env.AI_MODEL;
-
     if (!AI_model) {
         throw new Error("Missing AI Model");
     }
 
+    const params = withTools ? {
+        model: AI_model,
+        messages: messages,
+        max_completion_tokens: 4096,
+        top_p: 0.95,
+        tools: functions,
+        tool_choice: "auto",
+    } : {
+        model: AI_model,
+        messages: messages,
+        max_completion_tokens: 4096,
+        top_p: 0.95,
+        response_format:{ "type": "json_object" }
+    };
+
     try {
-        const response = await client.chat.completions.create({
-            model: AI_model,
-            messages: messages,
-            max_completion_tokens: 4096,
-            top_p: 0.95,
-            tools: functions,
-            tool_choice: "auto",
-        });
+        const response = await client.chat.completions.create(params);
         if (!response || !response.choices || response.choices.length === 0) {
             console.error("🚨 OpenAI SDK Error: No response or choices found");
             return res.status(500).json({
@@ -129,10 +137,7 @@ async function parseUserMessage(chatId, userId, message) {
         try {
             let content = "Processing";
             let recommendationItems = { content: null, recommendation: null };
-            const botMessage = await obtainChatResponse(messages);
-            // const botMessage = {
-            //     response: { content: "test", summary: "yolo" },
-            // };
+            const botMessage = await obtainChatResponse(messages, true);
             if (!botMessage) {
                 throw Error("Bot message not being sent");
             }
@@ -141,33 +146,33 @@ async function parseUserMessage(chatId, userId, message) {
             if ("tool_calls" in botMessage) {
                 const { name, arguments: argsJson } =
                     botMessage.tool_calls[0].function;
-                console.debug(argsJson);
                 const args = JSON.parse(argsJson);
-                console.debug(args);
-                const processedCriteria = args.criteria;
-                const parts = await gatherParts(processedCriteria);
-
-                console.debug(JSON.stringify(parts));
-
+                
                 let result;
                 if (name == "makeRecommendation") {
-                    // check the rec value
+                    const processedCriteria = args.criteria;
+                    const parts = await gatherParts(processedCriteria);
+
+                    result = (await makeRecommendation(chat, messages, parts));
                 }
 
                 messages.push({
                     role: "function",
                     name,
-                    content: JSON.stringify(result),
+                    content: JSON.stringify(result.recommendation),
                 });
 
                 return {
                     status: "success",
                     response: {
                         role: "assistant",
-                        content: JSON.stringify(parts),
+                        content: result.content,
+                        recommendation: result.recommendation
                     },
+                    
                 };
             }
+
             // Handle if it is content response
             else if (botMessage.content) {
                 const botContent = JSON.parse(botMessage.content);
@@ -236,37 +241,26 @@ async function parseUserMessage(chatId, userId, message) {
 }
 
 async function gatherParts(criteria) {
-    const recProducts = await getRecommendation(criteria);
+    const recProducts = await getAdvancedRecommendation(criteria);
     return recProducts;
 }
 
-// async function addRecommendation(chatId, rec) {
-//     const recommendation = {
-//         display: `${new Date().toLocaleDateString().replace(/\//g, "_")}-rec`,
-//         ...Object.keys(rec).reduce((acc, key) => {
-//             if (rec[key]._id) {
-//                 acc[key] = rec[key]._id;
-//             }
-//             return acc;
-//         }, {}),
-//     };
-//     const re2 = chat.recommendation.push(recommendation);
-//     await chat.save();
-// }
-
-async function makeRecommendation(chat, messages, criteria) {
-    const recProducts = await getRecommendation(criteria);
+async function makeRecommendation(chat, messages, components) {
     messages[0] = {
         role: "system",
         content: `${CHAT_CONTEXT_REC}\n\nPRODUCTS LIST ${JSON.stringify(
-            recProducts
+            components
         )}`,
     };
+
     try {
-        const botMessage = await obtainChatResponse(messages);
-        const content = `${botMessage.response.content}${
-            botMessage.response.content && botMessage.summary ? "\n\n" : ""
-        }${botMessage.summary ? `Current summary: ${botMessage.summary}` : ""}`;
+        const botMessage = await obtainChatResponse(messages, false);
+        const botContent = typeof botMessage.content === "string" 
+            ? JSON.parse(botMessage.content) 
+            : botMessage.content;
+        const content = `${botContent.response.content}${
+            botContent.response.content && botContent.summary ? "\n\n" : ""
+        }${botContent.summary ? `Current summary: ${botContent.summary}` : ""}`;
         //TODO: optimize to do one push to the server and also not create so many references
         await addMessageToChat(
             "assistant",
@@ -276,31 +270,23 @@ async function makeRecommendation(chat, messages, criteria) {
             null,
             false
         );
-        await addMessageToChat(
-            "system",
-            JSON.stringify(botMessage),
-            chat.creator,
-            chat,
-            null,
-            false
-        );
 
-        // console.log("recommendation results", botMessage);
+        // console.log("recommendation results", botContent);
         // TODO optimize the calls to the server for the product
         const recommendation = {
             display: `${new Date()
                 .toLocaleDateString()
                 .replace(/\//g, "_")}-rec`,
             // items: {
-            ...Object.keys(botMessage.results).reduce((acc, key) => {
-                if (botMessage.results[key]._id) {
-                    acc[key] = botMessage.results[key]._id;
+            ...Object.keys(botContent.results).reduce((acc, key) => {
+                if (botContent.results[key]._id) {
+                    acc[key] = botContent.results[key]._id;
                 }
                 return acc;
             }, {}),
             // },
         };
-        const re2 = chat.recommendation.push(recommendation);
+        chat.recommendation.push(recommendation);
         await chat.save();
 
         return {
@@ -315,6 +301,7 @@ async function makeRecommendation(chat, messages, criteria) {
             status: "fail",
             status_message: error.message,
             response: "Something went wrong, try again",
+            recommendation: null,
         };
     }
 }

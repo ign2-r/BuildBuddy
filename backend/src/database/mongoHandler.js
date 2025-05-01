@@ -84,7 +84,7 @@ const getAdvancedRecommendation = async (criteria) => {
         const res = await Promise.all(
             categories.map(async (cat) => {
                 if (Product.VALID_CAT.includes(cat)) {
-                    const result = await Product.recSearch(cat, criteria[cat].minBudget, criteria[cat].maxBudget, criteria[cat].preferences, 4);
+                    const result = await Product.recSearch(cat, criteria[cat].minBudget, criteria[cat].maxBudget, criteria[cat].preferences, 3);
                     console.log(`Processing ${cat}`, result.length);
                     return result;
                 }
