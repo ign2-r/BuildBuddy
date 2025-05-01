@@ -170,13 +170,22 @@ productSchema.statics.recSearch = function (category, minPrice, maxPrice, keywor
         {
             $match: {
                 category: new RegExp(category, "i"),
-                msrpPrice: { $gte: minPrice, $lte: maxPrice },
             },
         },
         {
             $addFields: {
                 score: {
                     $add: [
+                        // +10 for matching msrpPrice
+                        {
+                            $cond: [
+                                {
+                                    $and: [{ $gte: ["$msrpPrice", minPrice] }, { $lte: ["$msrpPrice", maxPrice] }],
+                                },
+                                10,
+                                0,
+                            ],
+                        },
                         // +5 × (number of brand matches)
                         {
                             $multiply: [

@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 const Chat = require("../database/model/Chat");
 const User = require("../database/model/User");
 const Product = require("../database/model/Product");
-const { addMessageToChat } = require("../database/mongoHandler");
+const { addMessageToChat, getAdvancedRecommendation } = require("../database/mongoHandler");
 const fs = require("fs");
 const { testRec } = require("../controllers/chatbotController");
 const { resetChat } = require("../controllers/chatController");
@@ -205,6 +205,7 @@ router.post("/dbrec", async (req, res) => {
 
 router.post("/rectest", async (req, res) => {
     const { criteria } = req.body;
+    console.log(criteria);
 
     if (!criteria) {
         res.status(500).json({ message: "Invalid input" });
@@ -212,9 +213,8 @@ router.post("/rectest", async (req, res) => {
     }
 
     try {
-        
-        const results = await Product.recSearch(category, minBudget, maxBudget, keywords);
-        res.status(200).json({ status: "success", status_message: `success`, results: results });
+        const allResults = await getAdvancedRecommendation(criteria);
+        res.status(200).json({ status: "success", status_message: `success`, results: allResults });
     } catch (e) {
         console.error(e);
         res.status(500).json({ message: "Internal Error" });

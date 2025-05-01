@@ -3,14 +3,7 @@ const Chat = require("./model/Chat");
 const Message = require("./model/Message");
 const Product = require("./model/Product");
 
-const addMessageToChat = async (
-    role,
-    content,
-    userId,
-    currChat = null,
-    chatId = null,
-    setChat = true
-) => {
+const addMessageToChat = async (role, content, userId, currChat = null, chatId = null, setChat = true) => {
     try {
         if (!currChat && chatId) {
             currChat = await Chat.findById(chatId);
@@ -34,11 +27,7 @@ const addMessageToChat = async (
         currChat.messages.push(currMessage._id);
 
         if (typeof currChat.save !== "function") {
-            console.error(
-                `currChat is not a Mongoose document: ${JSON.stringify(
-                    currChat
-                )}`
-            );
+            console.error(`currChat is not a Mongoose document: ${JSON.stringify(currChat)}`);
             return { status: "fail", status_message: "Internal error" };
         }
 
@@ -59,10 +48,7 @@ const getRecommendation = async (criteria) => {
             categories.map(async (cat) => {
                 if (Product.VALID_CAT.includes(cat)) {
                     const data = await Product.getCategory(cat, 3)
-                        .msrpPriceRange(
-                            criteria[cat].minBudget,
-                            criteria[cat].maxBudget
-                        )
+                        .msrpPriceRange(criteria[cat].minBudget, criteria[cat].maxBudget)
                         .select({
                             _id: 1,
                             category: 1,
@@ -91,4 +77,26 @@ const getRecommendation = async (criteria) => {
     }
 };
 
-module.exports = { addMessageToChat, getRecommendation };
+const getAdvancedRecommendation = async (criteria) => {
+    try {
+        const categories = Object.keys(criteria);
+        const res = await Promise.all(
+            categories.map(async (cat) => {
+                if (Product.VALID_CAT.includes(cat)) {
+                    const result = await Product.recSearch(cat, criteria[cat].minBudget, criteria[cat].maxBudget, criteria[cat].preferences);
+                    console.log(`Processing ${cat}`, result.length);
+                    return result;
+                }
+                return null; // Return null for categories not in VALID_CAT
+            })
+        );
+        return res.filter((item) => item !== null); // Filter out null values
+    } catch (e) {
+        console.error(e);
+        return {
+            status_rec: "failed"
+        };
+    }
+};
+
+module.exports = { addMessageToChat, getRecommendation, getAdvancedRecommendation };
