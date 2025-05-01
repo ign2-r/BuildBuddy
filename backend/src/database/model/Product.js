@@ -162,7 +162,7 @@ productSchema.statics.findByName = function (product) {
     return this.find({ name: new RegExp(name, "i") });
 };
 
-productSchema.statics.recSearch = function (category, minPrice, maxPrice, keywords) {
+productSchema.statics.recSearch = function (category, minPrice, maxPrice, keywords, limit) {
     console.debug(`Starting rec search with ${category}, ${minPrice}, ${maxPrice}, ${keywords}`);
     const regex = keywords.length !== 0 ? new RegExp(keywords.map((k) => k.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")).join("|"), "i") : new RegExp(/.*/g);
 
@@ -311,7 +311,7 @@ productSchema.statics.recSearch = function (category, minPrice, maxPrice, keywor
                 score: 1, // include score if you want to inspect it
             },
         },
-        { $limit: 4 },
+        { $limit: limit },
     ];
     return this.aggregate(pipeline);
 };

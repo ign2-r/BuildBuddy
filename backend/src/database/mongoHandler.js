@@ -78,12 +78,13 @@ const getRecommendation = async (criteria) => {
 };
 
 const getAdvancedRecommendation = async (criteria) => {
+    // TODO: look into parsing out items that do not hit the spec requirements
     try {
         const categories = Object.keys(criteria);
         const res = await Promise.all(
             categories.map(async (cat) => {
                 if (Product.VALID_CAT.includes(cat)) {
-                    const result = await Product.recSearch(cat, criteria[cat].minBudget, criteria[cat].maxBudget, criteria[cat].preferences);
+                    const result = await Product.recSearch(cat, criteria[cat].minBudget, criteria[cat].maxBudget, criteria[cat].preferences, 4);
                     console.log(`Processing ${cat}`, result.length);
                     return result;
                 }
