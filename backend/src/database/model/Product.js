@@ -50,38 +50,20 @@ const productSchema = new Schema(
  * @param {number} price - price for the product without discounts.
  * @param {number} discountPrice - discounted price.
  */
-productSchema.statics.updateLink = async function (
-    productId,
-    name = null,
-    url,
-    rating,
-    vendor,
-    price,
-    discountPrice
-) {
+productSchema.statics.updateLink = async function (productId, name = null, url, rating, vendor, price, discountPrice) {
     try {
         const updateFields = { url: url, vendor: vendor };
-        if (rating !== null && rating !== undefined)
-            updateFields.rating = rating;
+        if (rating !== null && rating !== undefined) updateFields.rating = rating;
         if (price !== null && price !== undefined) updateFields.price = price;
-        if (discountPrice !== null && discountPrice !== undefined)
-            updateFields.discountPrice = discountPrice;
+        if (discountPrice !== null && discountPrice !== undefined) updateFields.discountPrice = discountPrice;
 
         let result = { modifiedCount: -1 };
         if (productId) {
-            result = await this.updateOne(
-                { _id: createFromHexString(productId) },
-                { $push: { links: updateFields } }
-            );
+            result = await this.updateOne({ _id: createFromHexString(productId) }, { $push: { links: updateFields } });
         } else if (name) {
-            result = await this.updateOne(
-                { name: name },
-                { $push: { links: updateFields } }
-            );
+            result = await this.updateOne({ name: name }, { $push: { links: updateFields } });
         } else {
-            throw new Error(
-                "Missing name or productID for updating product spec"
-            );
+            throw new Error("Missing name or productID for updating product spec");
         }
 
         if (result.modifiedCount > 0) {
@@ -101,10 +83,7 @@ productSchema.statics.updateLink = async function (
  */
 productSchema.statics.removeLink = async function (productId, url) {
     try {
-        const result = await this.updateOne(
-            { _id: createFromHexString(productId) },
-            { $pull: { links: { url: url } } }
-        );
+        const result = await this.updateOne({ _id: createFromHexString(productId) }, { $pull: { links: { url: url } } });
 
         if (result.modifiedCount > 0) {
             console.log(`Successfully removed item with ID: ${productId}`);
@@ -127,43 +106,23 @@ productSchema.statics.removeLink = async function (productId, url) {
  * @param {boolean} overclock - Overclock capability.
  * @param {string[]} other - Other specifications (e.g., storage read/write, RAM size).
  */
-productSchema.statics.addSpec = async function (
-    productId,
-    name = null,
-    speed,
-    wattageUse,
-    size,
-    requirements,
-    overclock,
-    other
-) {
+productSchema.statics.addSpec = async function (productId, name = null, speed, wattageUse, size, requirements, overclock, other) {
     try {
         const updateFields = {};
         if (speed !== null && speed !== undefined) updateFields.speed = speed;
-        if (wattageUse !== null && wattageUse !== undefined)
-            updateFields.wattageUse = wattageUse;
+        if (wattageUse !== null && wattageUse !== undefined) updateFields.wattageUse = wattageUse;
         if (size !== null && size !== undefined) updateFields.size = size;
-        if (requirements !== null && requirements !== undefined)
-            updateFields.requirements = requirements;
-        if (overclock !== null && overclock !== undefined)
-            updateFields.overclock = overclock;
+        if (requirements !== null && requirements !== undefined) updateFields.requirements = requirements;
+        if (overclock !== null && overclock !== undefined) updateFields.overclock = overclock;
         if (other !== null && other !== undefined) updateFields.other = other;
 
         let result = { modifiedCount: -1 };
         if (productId) {
-            result = await this.updateOne(
-                { _id: createFromHexString(productId) },
-                { $push: { specs: updateFields } }
-            );
+            result = await this.updateOne({ _id: createFromHexString(productId) }, { $push: { specs: updateFields } });
         } else if (name) {
-            result = await this.updateOne(
-                { name: name },
-                { $push: { specs: updateFields } }
-            );
+            result = await this.updateOne({ name: name }, { $push: { specs: updateFields } });
         } else {
-            throw new Error(
-                "Missing name or productID for updating product spec"
-            );
+            throw new Error("Missing name or productID for updating product spec");
         }
 
         if (result.modifiedCount > 0) {
@@ -182,9 +141,7 @@ productSchema.statics.addSpec = async function (
  * @param {number} limit the amount of returns - optional, default 25.
  */
 productSchema.statics.getCategory = function (category, limit = 25) {
-    return this.find({ category: category })
-        .sort({ releaseDate: -1 })
-        .limit(limit);
+    return this.find({ category: category }).sort({ releaseDate: -1 }).limit(limit);
 };
 
 /**
@@ -205,39 +162,147 @@ productSchema.statics.findByName = function (product) {
     return this.find({ name: new RegExp(name, "i") });
 };
 
-productSchema.statics.recSearch = function (
-    category,
-    minPrice,
-    maxPrice,
-    keywords
-) {
+productSchema.statics.recSearch = function (category, minPrice, maxPrice, keywords) {
+    console.debug(`Starting rec search with ${category}, ${minPrice}, ${maxPrice}, ${keywords}`);
+    const regex = keywords.length !== 0 ? new RegExp(keywords.map((k) => k.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")).join("|"), "i") : new RegExp(/.*/g);
+
     const pipeline = [
         {
             $match: {
-                category: category,
-                msrpPrice: {
-                    $gte: minPrice,
-                    $lte: maxPrice,
-                },
-                $or: [
-                    {
-                        name: {
-                            $in: keywords.map((k) => new RegExp(k, "i")),
-                        },
-                    },
-                    {
-                        brand: {
-                            $in: keywords.map((k) => new RegExp(k, "i")),
-                        },
-                    },
-                    {
-                        "specs.other": {
-                            $in: keywords.map((k) => new RegExp(k, "i")),
-                        },
-                    },
-                ],
+                category: new RegExp(category, "i"),
+                msrpPrice: { $gte: minPrice, $lte: maxPrice },
             },
         },
+        {
+            $addFields: {
+                score: {
+                    $add: [
+                        // +5 × (number of brand matches)
+                        {
+                            $multiply: [
+                                {
+                                    $size: {
+                                        $regexFindAll: {
+                                            input: { $ifNull: ["$brand", ""] },
+                                            regex,
+                                        },
+                                    },
+                                },
+                                5,
+                            ],
+                        },
+
+                        // +5 × (number of matches in size)
+                        {
+                            $multiply: [
+                                {
+                                    $size: {
+                                        $filter: {
+                                            input: { $ifNull: ["$size", []] },
+                                            as: "str",
+                                            cond: {
+                                                $regexMatch: {
+                                                    input: { $toString: "$$str" },
+                                                    regex,
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                                5,
+                            ],
+                        },
+
+                        // +3 × (number of matches in otherStrings)
+                        {
+                            $multiply: [
+                                {
+                                    $size: {
+                                        $filter: {
+                                            input: { $ifNull: ["$other", []] },
+                                            as: "str",
+                                            cond: {
+                                                $regexMatch: {
+                                                    input: { $toString: "$$str" },
+                                                    regex,
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                                3,
+                            ],
+                        },
+
+                        // +2 × (number of matches in aesthetic)
+                        {
+                            $multiply: [
+                                {
+                                    $size: {
+                                        $filter: {
+                                            input: { $ifNull: ["$aesthetic", []] },
+                                            as: "str",
+                                            cond: {
+                                                $regexMatch: {
+                                                    input: { $toString: "$$str" },
+                                                    regex,
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                                2,
+                            ],
+                        },
+                        // +1 × (number of name matches)
+                        {
+                            $multiply: [
+                                {
+                                    $size: {
+                                        $regexFindAll: {
+                                            input: { $ifNull: ["$name", ""] },
+                                            regex,
+                                        },
+                                    },
+                                },
+                                1,
+                            ],
+                        },
+
+                        // +1 × (number of description matches)
+                        {
+                            $multiply: [
+                                {
+                                    $size: {
+                                        $regexFindAll: {
+                                            input: { $ifNull: ["$description", ""] },
+                                            regex,
+                                        },
+                                    },
+                                },
+                                1,
+                            ],
+                        },
+                    ],
+                },
+            },
+        },
+        { $sort: { score: -1, releaseDate: -1 } },
+        {
+            $project: {
+                _id: 1,
+                category: 1,
+                name: 1,
+                aesthetic: 1,
+                brand: 1,
+                description: 1,
+                msrpPrice: 1,
+                releaseDate: 1,
+                specs: 1,
+                score: 1, // include score if you want to inspect it
+            },
+        },
+        { $limit: 4 },
     ];
     return this.aggregate(pipeline);
 };
@@ -279,11 +344,4 @@ const Product = model("Product", productSchema);
 
 module.exports = Product;
 
-module.exports.VALID_CAT = [
-    "cpu",
-    "gpu",
-    "memory",
-    "psu",
-    "motherboard",
-    "storage",
-];
+module.exports.VALID_CAT = ["cpu", "gpu", "memory", "psu", "motherboard", "storage"];

@@ -105,9 +105,7 @@ router.get("/chat", async (req, res) => {
     const { chatId } = req.query;
 
     try {
-        const data = await Chat.findById(chatId)
-            .withMessages()
-            .withCreatorInfo();
+        const data = await Chat.findById(chatId).withMessages().withCreatorInfo();
         res.status(200).json({
             chats: data,
             status: "success",
@@ -156,24 +154,10 @@ router.post("/addRandomProducts", async (req, res) => {
 });
 
 router.post("/addRec", async (req, res) => {
-    const {
-        chatId,
-        cpuId,
-        gpuId,
-        ramId,
-        psuId,
-        motherboardId,
-        storageId,
-        accessoriesIds,
-    } = req.query;
+    const { chatId, cpuId, gpuId, ramId, psuId, motherboardId, storageId, accessoriesIds } = req.query;
     try {
         // chatId, cpuId, gpuId, ramId, psuId, motherboardId, storageId, ...accessoriesIds
-        const result = await Chat.addRecommendation(
-            "67b9421bdc98ff8f9541512e",
-            "67bfd00a2ebfddd86b1ca550",
-            "67bfd00a2ebfddd86b1ca54f",
-            "67bfd00a2ebfddd86b1ca553"
-        ); //hardcoded
+        const result = await Chat.addRecommendation("67b9421bdc98ff8f9541512e", "67bfd00a2ebfddd86b1ca550", "67bfd00a2ebfddd86b1ca54f", "67bfd00a2ebfddd86b1ca553"); //hardcoded
         res.status(200).json({
             status: "success",
             status_message: `${result}`,
@@ -190,6 +174,47 @@ router.post("/purgeAllButProducts", async (req, res) => {
         await User.deleteMany({});
         await Message.deleteMany({});
         res.status(200).json({ status: "success", status_message: `success` });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: "Internal Error" });
+    }
+});
+
+router.post("/dbrec", async (req, res) => {
+    const { category, minBudget, maxBudget, keywords } = req.body;
+
+    console.debug({
+        category,
+        minBudget,
+        maxBudget,
+        keywords,
+    });
+    if (!category || isNaN(minBudget) || isNaN(maxBudget) || !Array.isArray(keywords)) {
+        res.status(500).json({ message: "Invalid inputs" });
+        return;
+    }
+
+    try {
+        const results = await Product.recSearch(category, minBudget, maxBudget, keywords);
+        res.status(200).json({ status: "success", status_message: `success`, results: results });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: "Internal Error" });
+    }
+});
+
+router.post("/rectest", async (req, res) => {
+    const { criteria } = req.body;
+
+    if (!criteria) {
+        res.status(500).json({ message: "Invalid input" });
+        return;
+    }
+
+    try {
+        
+        const results = await Product.recSearch(category, minBudget, maxBudget, keywords);
+        res.status(200).json({ status: "success", status_message: `success`, results: results });
     } catch (e) {
         console.error(e);
         res.status(500).json({ message: "Internal Error" });
