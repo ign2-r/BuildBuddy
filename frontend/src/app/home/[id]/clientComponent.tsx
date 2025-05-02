@@ -67,9 +67,7 @@ export function HomePage({chatId}: {chatId:string |null }) {
                         }))
                 );
 
-                if (getChat?.recommendation && getChat.recommendation.length > 0) {
-                    setRecommendations(getChat.recommendation);
-                }
+                setRecommendations(getChat.recommendation ? getChat.recommendation: [] );
             } catch (error) {
                 console.error("Error during fetch: ", error);
             }
