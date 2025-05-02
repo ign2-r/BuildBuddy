@@ -17,17 +17,22 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 // ============================================
 function obtainAIAgent() {
     if (!GROQ_API_KEY) {
-        throw new Error("Missing Groq API Key");
+        throw new Error("Missing AI API Key");
     }
     return new OpenAI({ apiKey: process.env.GROQ_API_KEY, baseURL: process.env.AI_BASE_URL });
 }
 
 async function obtainChatResponse(messages) {
     const client = obtainAIAgent();
+    const AI_model = process.env.AI_MODEL;
+
+    if(!AI_model){
+        throw new Error("Missing AI Model");
+    }
 
     try {
         const response = await client.chat.completions.create({
-            model: "llama-3.3-70b-versatile",
+            model: AI_model,
             messages: messages,
             max_completion_tokens: 4096,
             top_p: 0.95,
@@ -37,14 +42,14 @@ async function obtainChatResponse(messages) {
         });
 
         if (!response || !response.choices || response.choices.length === 0) {
-            console.error("🚨 GROQ SDK Error: No response or choices found");
-            return res.status(500).json({ reply: "GROQ SDK Error: No response or choices found" });
+            console.error("🚨 OpenAI SDK Error: No response or choices found");
+            return res.status(500).json({ reply: "OpenAI SDK Error: No response or choices found" });
         }
         const botMessage = JSON.parse(response.choices[0].message.content);
 
         return botMessage;
     } catch (error) {
-        console.error("🚨 GROQ SDK Rec Error:", error);
+        console.error("🚨 OpenAI SDK Rec Error:", error);
     }
 }
 
@@ -53,7 +58,7 @@ async function obtainChatResponse(messages) {
 // ============================================
 
 async function parseUserMessage(chatId, userId, message) {
-    console.log(`🛠 Sending request to GROQ API using SDK for ${userId} in ${chatId}`);
+    console.log(`🛠 Sending request to AI API using SDK for ${userId} in ${chatId}`);
     let chat = await Chat.findById(chatId).withMessages();
 
     const messages = chat.messages.map((message) => ({

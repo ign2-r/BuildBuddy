@@ -1,28 +1,47 @@
 'use client';
 
+// import { signOut } from "next-auth/react"
+import { useChatContext } from '@/context/ChatContext';
+import { User } from '@/utils/db';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
-import { useRouter } from 'next/navigation';
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import { useSession } from 'next-auth/react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const Navbar = () => {
-  const router = useRouter();
+    const { data: session } = useSession();
+    const { setUser, setDefault } = useChatContext();
+    const [open, setopen] = useState(false);
+    const router = useRouter();
+    const pathname = usePathname();
 
-  const handleSignOut = async () => {
-    const confirmed = window.confirm('Are you sure you want to sign out?');
-    if (!confirmed) return;
+    const sessionUser = session?.user;
 
-    try {
-      await fetch('/api/auth/signout', {
-        method: 'GET',
-        credentials: 'include',
-      });
-      window.location.href = '/';
-    } catch (err) {
-      console.error('Failed to sign out:', err);
+    useEffect(() => {
+      if (pathname !== "/register" && pathname !== "/login" && pathname.includes("/api")) {
+        router.replace("/login");
+    } else if (sessionUser) {
+            setUser(session?.user as User);
+            if (pathname === "/register" || pathname === "/login") {
+                router.replace("/chats");
+            }
+          }
+    }, [pathname, sessionUser]);
+
+    const handleSignOut = async () => {
+        setDefault(true);
+        setopen(false);
+        // signOut(); //TODO: to fix it later
+        router.replace("/api/auth/signout");
+    };
+
+    const handleClose = () => {
+        setopen(false);
     }
-  };
 
   return (
-    <AppBar position="static" sx={{ bgcolor: '#1E1E1E', boxShadow: 3 }}>
+    <AppBar position="static" sx={{ bgcolor: '#1E1E1E', boxShadow: 3, height: "6vh" }}>
       <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
         <Typography
           variant="h6"
@@ -33,13 +52,36 @@ const Navbar = () => {
         </Typography>
 
         <Box display="flex" gap={2}>
-          <Button variant="contained" onClick={() => router.push('/chats')}>
+          {pathname.includes("/home/") &&
+            <Button variant="contained" onClick={() => router.push('/chats')}>
             ← Back to Chats
-          </Button>
-          <Button color="error" variant="contained" onClick={handleSignOut}>
+            </Button>
+          }
+          {
+            sessionUser &&
+            <Button color="error" variant="contained" onClick={() => {setopen(true)}}>
             Sign Out
           </Button>
+          }
         </Box>
+        <Dialog
+            open={open}
+            aria-label="alert-dialog-logout"
+            >
+            <DialogTitle id="alert-dialog-logout-title">{"Are you sure you want to log out?"}</DialogTitle>
+            <DialogContent>
+                <DialogContentText id="alert-dialog-logout-description">
+                    Logging out will sign you out of Buildbuddy and you will have to log in again.
+                </DialogContentText>
+                <DialogActions>
+                <Button onClick={handleClose} variant="contained" color="secondary">Cancel</Button>
+                <Button onClick={handleSignOut} variant="contained" autoFocus>
+                    Sign out
+                </Button>
+                </DialogActions>
+            </DialogContent>
+
+        </Dialog>
       </Toolbar>
     </AppBar>
   );

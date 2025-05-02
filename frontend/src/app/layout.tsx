@@ -7,6 +7,8 @@ import theme from "../utils/theme";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { SessionProvider } from "next-auth/react";
 import { ChatContextProvider } from "@/context/ChatContext";
+import Navbar from "@/components/Navbar";
+import { Box } from "@mui/material";
 
 interface RootLayoutProps {
     children: ReactNode;
@@ -23,7 +25,12 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                     <ThemeProvider theme={theme}>
                         <CssBaseline />
                         <ChatContextProvider>
-                            <SessionProvider>{children}</SessionProvider>
+                            <SessionProvider>
+                                <Navbar/>
+                                <Box sx={{height: "94vh"}}>
+                                    {children}
+                                </Box>
+                            </SessionProvider>
                         </ChatContextProvider>
                     </ThemeProvider>
                 </AppRouterCacheProvider>

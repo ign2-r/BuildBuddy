@@ -23,7 +23,7 @@ export default function RegisterPage() {
         if (!!response.error) {
             setCurrError(response.error);
         } else {
-          router.push("/home");
+          router.push("/chats");
         }
       } else{
         setCurrError("Something has went wrong")

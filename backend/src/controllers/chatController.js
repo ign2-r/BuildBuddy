@@ -88,9 +88,12 @@ exports.resetChat = async (req, res) => {
 
 exports.getMessages = async (req, res) => {
     const { chatId } = req.query;
+    // TODO: add authorization header to check if the user is the right person
     try {
       const chat = await Chat.findById(chatId).populate("messages");
       if (!chat) return res.status(404).json({ error: "Chat not found" });
+
+
   
       const filtered = chat.messages.filter((m) => {
         return (
@@ -105,6 +108,40 @@ exports.getMessages = async (req, res) => {
     } catch (err) {
       console.error(err);
       return res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  };
+
+  exports.getChatById = async (req, res) => {
+    const { chatId } = req.query;
+    // TODO: add authorization header to check if the user is the right person
+    try {
+      const chat = await Chat.findById(chatId).withMessagesMin().withRecommendations();
+      if (!chat) return res.status(404).json({ error: "Chat not found" });
+  
+      return res.status(200).json({ chat: chat });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  };
+
+  exports.renameChat = async (req, res) => {
+    const { chatId, name } = req.body;
+  
+    try {
+      const chat = await Chat.findById(chatId);
+  
+      if (!chat) {
+        return res.status(404).json({ status: "fail", message: "Chat not found" });
+      }
+  
+      chat.set({ display: name });
+      await chat.save();
+  
+      return res.status(200).json({ status: "success" });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ status: "fail", message: err.message });
     }
   };
 
