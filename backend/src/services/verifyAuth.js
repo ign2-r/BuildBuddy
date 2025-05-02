@@ -18,7 +18,7 @@ function authenticateBearer(req, res, next) {
         });
         req.user = payload; // attach your payload to the request
 
-        if ((req.body.userId && req.body.userId != payload.id) || (req.query.userId && req.query.userId !== payload.id)) {
+        if (payload.role != "admin" && ((req.body.userId && req.body.userId !== payload.id) || (req.query.userId && req.query.userId !== payload.id))) {
             return res.status(403).json({ error: "User ID mismatch" });
         }
         next();
