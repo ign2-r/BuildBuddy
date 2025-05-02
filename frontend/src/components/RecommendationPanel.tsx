@@ -63,6 +63,19 @@ const RecommendationPanel: React.FC = () => {
             <Typography variant="h6" mt={3}>
                 🧮 Total: ${total.toFixed(2)}
             </Typography>
+
+            {parts.length > 0 && (
+                <Box mt={3}>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                        onClick={() => window.location.href = '/guide'}
+                    >
+                        🛠 Let&apos;s Build It
+                    </Button>
+                </Box>
+            )}
         </Box>
     );
 };
