@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Box, Button, Typography, Card, CardContent, Grid } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useChatContext } from '@/context/ChatContext';
-import { getSession, useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { Chat } from '@/utils/db';
 import DialogDeleteChat from '@/components/DialogDeleteChat';
 import { generateAccessToken } from '@/app/actions/jwt';

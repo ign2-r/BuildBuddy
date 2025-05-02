@@ -13,7 +13,7 @@ export default function LogoutPage() {
             await doLogout();
         };
         logout();
-    }, []);
+    }, [setDefault]);
 
     return (
         <>

@@ -1,23 +1,30 @@
 # Use the official Node.js 18 image as the base image
 FROM node:22-alpine AS builder
 
+# Install pnpm globally
+RUN npm install -g pnpm
+
 # Set the working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package.json package-lock.json ./
+# Copy package.json and pnpm-lock.yaml
+COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies
-RUN npm install
+RUN pnpm install
 
 # Copy the rest of the application code
 COPY . .
 
+RUN pnpm rebuild bcrypt
 # Build the Next.js application
-RUN npm run build
+RUN pnpm run build
 
 # Use a minimal base image for the production environment
 FROM node:22-alpine AS production
+
+# Install pnpm globally
+RUN npm install -g pnpm
 
 # Set the working directory
 WORKDIR /app
@@ -33,4 +40,4 @@ COPY --from=builder /app/node_modules ./node_modules
 EXPOSE 3000
 
 # Start the application
-CMD ["npm", "run", "start"]
+CMD ["pnpm", "run", "start"]
