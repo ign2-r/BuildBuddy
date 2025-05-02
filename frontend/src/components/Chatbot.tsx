@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Box, Typography, Paper, TextField, Button } from "@mui/material";
 import { useChatContext } from "@/context/ChatContext";
+import { generateAccessToken } from "@/app/actions/jwt";
 
 const Chatbot: React.FC = () => {
     const { isLoadingMain, messages, chat, setMessages, setRecommendations, setIsLoading, user } = useChatContext();
@@ -41,7 +42,7 @@ const Chatbot: React.FC = () => {
             setMessages((prev) => [...prev, {role: "assistant", content: "🤔💭 Let me think about that..."}]);
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/recommend`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `bearer ${await generateAccessToken(user)}` },
                 body: JSON.stringify({ chatId: chat?._id, userId: userId, message: userInput }),
               });
               

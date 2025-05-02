@@ -4,61 +4,19 @@ const { processRecommendation } = require("../controllers/chatbotController");
 const { createChat, getChat, getChatById } = require("../controllers/chatController");
 const { getMessages } = require("../controllers/chatController");
 const { deleteChat } = require('../controllers/chatController');
+const {authenticateBearer} = require("../services/verifyAuth");
 
 dotenv.config();
 const router = express.Router();
 
-router.post("/chat", async (req, res) => {
-    const fetch = (await import("node-fetch")).default;
-    const userMessage = req.body.message;
-    const GROQ_API_KEY = process.env.GROQ_API_KEY;
+router.post("/create-chat", authenticateBearer, createChat);
+router.post("/get-chat", authenticateBearer, getChat);
+router.post('/delete-chat', authenticateBearer, deleteChat);
 
-    if (!GROQ_API_KEY) {
-        console.error("🚨 Missing API Key");
-        return res.status(500).json({ reply: "API key is missing." });
-    }
+router.post("/recommend", authenticateBearer, processRecommendation);
 
-    try {
-        console.log("🛠 Sending request to GROQ API...");
-
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${GROQ_API_KEY}`,
-            },
-            body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                messages: [{ role: "user", content: userMessage }],
-            }),
-        });
-
-        if (!response.ok) {
-            const errorDetails = await response.text();
-            console.error("🚨 GROQ API Error:", errorDetails);
-            return res.status(response.status).json({ reply: `GROQ API Error: ${errorDetails}` });
-        }
-
-        const data = await response.json();
-        console.log("✅ Response from GROQ:", data);
-        res.json({ reply: data.choices[0].message.content });
-    } catch (error) {
-        console.error("🚨 Error connecting to GROQ API:", error);
-        res.status(500).json({ reply: "Failed to connect to GROQ." });
-    }
-});
-
-router.post("/create-chat", createChat);
-router.post("/get-chat", getChat);
-router.post('/delete-chat', deleteChat);
-
-router.post("/recommend", processRecommendation);
-router.get("/recommend", async (req, res) => {
-    res.status(200).json({ response: "hi" });
-});
-
-router.get("/get-messages", getMessages);
-router.get("/get-chat-id", getChatById);
+router.get("/get-messages", authenticateBearer, getMessages);
+router.get("/get-chat-id", authenticateBearer, getChatById);
 
 module.exports = router;
 

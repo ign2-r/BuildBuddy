@@ -1,9 +1,10 @@
 const express = require("express");
 const Product = require("../database/model/Product");
+const { authenticateViaSecret } = require("../services/verifyAuth");
 
 const router = express.Router();
 
-router.get("/searchCategory", async (req, res) => {
+router.get("/searchCategory", authenticateViaSecret, async (req, res) => {
     const { category } = req.query;
     try {
         const response = await Product.getCategory(category, 5).msrpPriceRange(300, 500);
@@ -13,7 +14,7 @@ router.get("/searchCategory", async (req, res) => {
     }
 });
 
-router.get("/allProducts", async (req, res) => {
+router.get("/allProducts", authenticateViaSecret, async (req, res) => {
     try {
         const response = await Product.find();
         res.status(200).json({ status: "success", message: "Test data created successfully", products: response });
@@ -22,7 +23,7 @@ router.get("/allProducts", async (req, res) => {
     }
 });
 
-router.post("/bulkAddProduct", async (req, res) => {
+router.post("/bulkAddProduct", authenticateViaSecret, async (req, res) => {
     const body = req.body;
     try {
         for (const product of body) {
@@ -44,14 +45,14 @@ router.post("/bulkAddProduct", async (req, res) => {
     }
 });
 
-router.post("/addSpec", async (req, res) => {
-    const { productId, name, speed, wattageUse, size, requirements, overclock, other } = req.body;
-    try {
-        const response = await Product.addSpec(productId, name, speed, wattageUse, size, requirements, overclock, other);
-        res.status(201).json({ status: "success", message: `Data added successfully` });
-    } catch (error) {
-        res.status(500).json({ status: "error", message: "Failed to create data", error: error.message });
-    }
-});
+// router.post("/addSpec", authenticateViaSecret, async (req, res) => {
+//     const { productId, name, speed, wattageUse, size, requirements, overclock, other } = req.body;
+//     try {
+//         const response = await Product.addSpec(productId, name, speed, wattageUse, size, requirements, overclock, other);
+//         res.status(201).json({ status: "success", message: `Data added successfully` });
+//     } catch (error) {
+//         res.status(500).json({ status: "error", message: "Failed to create data", error: error.message });
+//     }
+// });
 
 module.exports = router;

@@ -8,11 +8,12 @@ const fs = require("fs");
 const { testRec } = require("../controllers/chatbotController");
 const { resetChat } = require("../controllers/chatController");
 const Message = require("../database/model/Message");
+const { authenticateViaSecret } = require("../services/verifyAuth");
 
 dotenv.config();
 const router = express.Router();
 
-router.get("/database", async (req, res) => {
+router.get("/database", authenticateViaSecret, async (req, res) => {
     const data = {
         users: await User.find(),
         info: await Chat.find().withMessages(),
@@ -21,7 +22,7 @@ router.get("/database", async (req, res) => {
     res.status(200).json({ data, status: "success", status_message: "" });
 });
 
-router.get("/allChat", async (req, res) => {
+router.get("/allChat", authenticateViaSecret, async (req, res) => {
     try {
         const data = await Chat.getAll().exec();
         res.status(200).json({
@@ -35,7 +36,7 @@ router.get("/allChat", async (req, res) => {
     }
 });
 
-router.get("/userChats", async (req, res) => {
+router.get("/userChats", authenticateViaSecret, async (req, res) => {
     const { uid } = req.query;
 
     try {
@@ -51,7 +52,7 @@ router.get("/userChats", async (req, res) => {
     }
 });
 
-router.post("/database", async (req, res) => {
+router.post("/database", authenticateViaSecret, async (req, res) => {
     const newUser = new User({
         email: "testuser@example.com",
         password: "password123",
@@ -77,7 +78,7 @@ router.post("/database", async (req, res) => {
     });
 });
 
-router.post("/addmsg", async (req, res) => {
+router.post("/addmsg", authenticateViaSecret, async (req, res) => {
     console.log("Addmsg start");
     const { chatId, message, isSystem, userId } = req.body;
     try {
@@ -101,7 +102,7 @@ router.post("/addmsg", async (req, res) => {
     }
 });
 
-router.get("/chat", async (req, res) => {
+router.get("/chat", authenticateViaSecret, async (req, res) => {
     const { chatId } = req.query;
 
     try {
@@ -117,7 +118,7 @@ router.get("/chat", async (req, res) => {
     }
 });
 
-router.get("/recommendations", async (req, res) => {
+router.get("/recommendations", authenticateViaSecret, async (req, res) => {
     const { userId } = req.query;
 
     try {
@@ -133,7 +134,7 @@ router.get("/recommendations", async (req, res) => {
     }
 });
 
-router.post("/addRandomProducts", async (req, res) => {
+router.post("/addRandomProducts", authenticateViaSecret, async (req, res) => {
     try {
         const dataFile = require("./final-temp.json");
 
@@ -153,7 +154,7 @@ router.post("/addRandomProducts", async (req, res) => {
     }
 });
 
-router.post("/addRec", async (req, res) => {
+router.post("/addRec", authenticateViaSecret, async (req, res) => {
     const { chatId, cpuId, gpuId, ramId, psuId, motherboardId, storageId, accessoriesIds } = req.query;
     try {
         // chatId, cpuId, gpuId, ramId, psuId, motherboardId, storageId, ...accessoriesIds
@@ -168,7 +169,7 @@ router.post("/addRec", async (req, res) => {
     }
 });
 
-router.post("/purgeAllButProducts", async (req, res) => {
+router.post("/purgeAllButProducts", authenticateViaSecret, async (req, res) => {
     try {
         await Chat.deleteMany({});
         await User.deleteMany({});
@@ -180,7 +181,7 @@ router.post("/purgeAllButProducts", async (req, res) => {
     }
 });
 
-router.post("/dbrec", async (req, res) => {
+router.post("/dbrec", authenticateViaSecret, async (req, res) => {
     const { category, minBudget, maxBudget, keywords } = req.body;
 
     console.debug({
@@ -203,7 +204,7 @@ router.post("/dbrec", async (req, res) => {
     }
 });
 
-router.post("/rectest", async (req, res) => {
+router.post("/rectest", authenticateViaSecret, async (req, res) => {
     const { criteria } = req.body;
     console.log(criteria);
 
