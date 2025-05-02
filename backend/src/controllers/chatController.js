@@ -113,9 +113,9 @@ exports.getMessages = async (req, res) => {
 
   exports.getChatById = async (req, res) => {
     const { chatId } = req.query;
-    // TODO: add authorization header to check if the user is the right person
     try {
       const chat = await Chat.findById(chatId).withMessagesMin().withRecommendations();
+      if (req.user.id !== chat.creator.toString()) return res.status(403).json({ error: "Invalid Permissions To View" });
       if (!chat) return res.status(404).json({ error: "Chat not found" });
   
       return res.status(200).json({ chat: chat });
@@ -127,9 +127,10 @@ exports.getMessages = async (req, res) => {
 
   exports.renameChat = async (req, res) => {
     const { chatId, name } = req.body;
-  
+    
     try {
       const chat = await Chat.findById(chatId);
+      if (req.user.id !== chat.creator.toString()) return res.status(403).json({ error: "Invalid Permissions To View" });
   
       if (!chat) {
         return res.status(404).json({ status: "fail", message: "Chat not found" });
@@ -150,6 +151,8 @@ exports.getMessages = async (req, res) => {
   
     try {
       const chat = await Chat.findById(chatId);
+      if (req.user.id !== chat.creator.toString()) return res.status(403).json({ error: "Invalid Permissions To View" });
+
   
       if (!chat) {
         return res.status(404).json({ status: "fail", message: "Chat not found" });
