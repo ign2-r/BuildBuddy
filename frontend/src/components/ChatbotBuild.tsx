@@ -5,26 +5,32 @@ import { Box, Typography, TextField, Button } from "@mui/material";
 import { useChatContext } from "@/context/ChatContext";
 import { generateAccessToken } from "@/app/actions/jwt";
 import { motion } from "framer-motion";
+import { StepType } from "@/app/guide/page";
 
-const Chatbot: React.FC = () => {
-    const { isLoadingMain, messages, chat, setMessages, setRecommendations, setIsLoading, user } = useChatContext();
+const ChatbotBuild: React.FC<{ step: StepType }> = ({ step }) => {
+    const { isLoadingMain, setIsLoading, user } = useChatContext();
+    const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
+    const [allMessages, setAllMessages] = useState<{ role: string; content: string }[]>([]);
+
     const [userInput, setUserInput] = useState("");
-    const [hasRec, sethasRec] = useState(false);
     const userId = user?._id;
 
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const currMsg = [
+            { role: "system", content: "IN JSON FORMAT HELP WITH BUILD STEP: " + String(JSON.stringify(step)) },
+            { role: "assistant", content: `Hello! Based on the current step, how can I help you build?\n\nStep Description:\n${step.description}` },
+        ];
+        setAllMessages(currMsg);
+        setMessages(currMsg.filter((msg) => msg.role !== "system"));
+    }, [step]);
 
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [messages]);
-
-    useEffect(() => {
-        if(chat?.recommendation){
-            sethasRec(true);
-        }
-    }, [chat]);
 
     // Handle sending
     const handleSend = async () => {
@@ -45,33 +51,25 @@ const Chatbot: React.FC = () => {
         setIsLoading(true);
 
         try {
-            setMessages((prev) => [...prev, {role: "assistant", content: "🤔💭 Let me think about that..."}]);
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/recommend`, {
+            setMessages((prev) => [...prev, { role: "assistant", content: "🤔💭 Let me think about that..." }]);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/guide`, {
                 method: "POST",
-                headers: { 'Content-Type': 'application/json', 'Authorization': `bearer ${await generateAccessToken(user)}` },
-                body: JSON.stringify({ chatId: chat?._id, userId: userId, message: userInput }),
-              });
-              
-              if (!response.ok) {
+                headers: { "Content-Type": "application/json", Authorization: `bearer ${await generateAccessToken(user)}` },
+                body: JSON.stringify({ userId: userId, messages: allMessages }),
+            });
+
+            if (!response.ok) {
                 const errorDetails = await response.text();
                 console.error("Backend API Error:", errorDetails);
                 setMessages((prev) => [...prev, { role: "assistant", content: `Error: ${errorDetails}` }]);
                 setIsLoading(false);
                 return;
-              }
-              
-              const data = (await response.json()).message;
-              console.log("🧠 Full bot response:", data);
-              
-            setMessages((prev) => [...prev.slice(0, -1), { role: "assistant", content: data.content }]);
-
-            if (data.recommendation && setRecommendations) {
-                console.log("📦 Setting recommendations:", data.recommendation);
-                sethasRec(true);
-                setRecommendations((prev) => [...prev, data.recommendation]);
-            } else if (setRecommendations && !hasRec) {
-                setRecommendations([]);
             }
+
+            const data = (await response.json()).message;
+            console.log("🧠 Full bot response:", data);
+
+            setMessages((prev) => [...prev.slice(0, -1), { role: "assistant", content: data.content }]);
         } catch (error) {
             console.error("Error sending message:", error);
             setMessages((prev) => [...prev, { role: "assistant", content: "Error connecting to the server." }]);
@@ -126,7 +124,7 @@ const Chatbot: React.FC = () => {
                                 textAlign: msg.role === "assistant" ? "left" : "right",
                                 boxShadow: 1,
                                 wordBreak: "break-word",
-                                whiteSpace: "pre-wrap"
+                                whiteSpace: "pre-wrap",
                             }}
                         >
                             <Typography variant="body2">{msg.content}</Typography>
@@ -191,4 +189,4 @@ const Chatbot: React.FC = () => {
     );
 };
 
-export default Chatbot;
+export default ChatbotBuild;
