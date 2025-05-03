@@ -64,7 +64,7 @@ chatSchema.statics.toggleArchive = async function (chatId, toggleArchive = null)
 chatSchema.statics.getUserRecommendation = function (uid) {
     return this.find({ creator: createFromHexString(uid) })
         .withRecommendations()
-        .sort({ updatedAt: -1 })
+        .sort({ updatedAt: -1 }) //Changed from 1 to -1 to sort by most recent first
         .select({ recommendation: 1, creator: 1 });
 };
 
@@ -174,10 +174,3 @@ chatSchema.query.withRecommendations = function () {
 const Chat = model("Chat", chatSchema);
 module.exports = Chat;
 
-await Chat.findByIdAndUpdate(
-  chatId,
-  {
-    $push: { messages: messageId },
-    $set: { updatedAt: new Date() }
-  }
-);
