@@ -30,7 +30,7 @@ export const ChatContextProvider = ({ children }: ContextProviderProps) => {
   const [user, setUser] = useState<User |null>({} as User);
 
   const setDefault = (is_logout: boolean = false) => {
-    setChat({ _id: "", messages: [], recommendation: [], display: "", creator: "" });
+    setChat({ _id: "", messages: [], recommendation: [], display: "", creator: "", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
     setMessages([]);
     setRecommendations([]);
     if(is_logout){
