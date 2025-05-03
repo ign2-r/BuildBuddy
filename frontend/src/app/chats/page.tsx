@@ -5,111 +5,117 @@ import { Box, Button, Typography, Card, CardContent, Grid } from '@mui/material'
 import { useRouter } from 'next/navigation';
 import { useChatContext } from '@/context/ChatContext';
 import { useSession } from 'next-auth/react';
-import { Message, Chat, User } from '@/utils/db';
+import { Chat } from '@/utils/db';
+import DialogDeleteChat from '@/components/DialogDeleteChat';
+import { generateAccessToken } from '@/app/actions/jwt';
 
 export default function ChatsPage() {
   const [chats, setChats] = useState<Chat[]>([]);
-  const { user, setUser, setChat, setMessages } = useChatContext();
-  const { data: session, update } = useSession();
+  const { user, setChat, setMessages } = useChatContext();
+  const [selectedDeleteChat, setDeleteChat] = useState<Chat|null>(null)
+  const [openDialog, setOpenDialog] = useState(false);
+  const { update } = useSession();
   const router = useRouter();
 
   useEffect(() => {
     update();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (session?.user) {
-      setUser(session.user as User);
-    }
-  }, [session, setUser]);
-
-  useEffect(() => {
     if (!user?._id) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/get-chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: user._id, create: false }),
-    })
-      .then(res => res.json())
-      .then(data => setChats(data.chat || []))
-      .catch(err => console.error('Failed to fetch chats:', err));
+    const getChats = async () => {
+      try {
+        const bearerToken = await generateAccessToken(user);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get-chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `bearer ${bearerToken}` },
+          body: JSON.stringify({ userId: user._id, create: false }),
+        });
+        console.log({res});
+        
+        if (!res.ok) {
+          throw new Error('Failed to fetch chats');
+        }
+
+        const data = await res.json();
+        setChats(data.chat || []);
+      } catch (err) {
+        console.error('Failed to fetch chats:', err);
+      }
+    }
+
+    getChats();
   }, [user]);
 
   const createChat = async () => {
-    try {
-      if (!user?._id) return;
+    if (!user?._id) return;
+    
+    const createChat = async () => {
+      try {
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create-chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user._id }),
-      });
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create-chat`, {
+            method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `bearer ${await generateAccessToken(user)}` },
+          body: JSON.stringify({ userId: user._id }),
+        });
 
-      const data = await res.json();
-      const newChat: Chat = data.chat;
+        const data = await res.json();
+        const newChat: Chat = data.chat;
+        
+        if (!newChat || !newChat._id) return;
+        
+        setChat(newChat);
+        setMessages(newChat.messages || []);
+        router.push(`/home/${newChat._id}`);
+      } catch (err) {
+        console.error('Failed to create chat:', err);
+      }
+  }
+  createChat();
 
-      if (!newChat || !newChat._id) return;
-
-      setChat(newChat);
-      setMessages(newChat.messages || []);
-      router.push('/home');
-    } catch (err) {
-      console.error('Failed to create chat:', err);
-    }
   };
 
   const openChat = async (chatId: string) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get-messages?chatId=${chatId}`);
-      const data = await res.json();
-      const messages: Message[] = data.messages;
+      if(!chatId){
 
-      const selectedChat = chats.find(c => c._id === chatId);
-      if (!selectedChat) return;
-
-      setChat({
-        ...selectedChat,
-        messages,
-      });
-
-      setMessages(
-        (messages ?? []).filter(
-          (msg: Message) =>
-            (msg.role === 'user' || msg.role === 'assistant') &&
-            typeof msg.content === 'string' &&
-            !msg.content.trim().startsWith('{')
-        )
-      );
-
-      router.push('/home');
+        throw new Error("Invalid Chat URL");
+      }
+      router.push(`/home/${chatId}`);
     } catch (err) {
       console.error('Failed to open chat:', err);
     }
   };
 
-  const handleSignOut = async () => {
-    const confirmed = window.confirm('Are you sure you want to sign out?');
-    if (!confirmed) return;
-
-    try {
-      await fetch('/api/auth/signout', {
-        method: 'GET',
-        credentials: 'include',
+  const deleteChat = async () => {
+    const handleDeleteChat = async () => {
+      console.log("fixed");
+      if(!selectedDeleteChat) {
+      throw new Error("Unknown chat to delete");
+      }
+      try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/delete-chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `bearer ${await generateAccessToken(user)}` },
+        body: JSON.stringify({ chatId: selectedDeleteChat._id }),
       });
-      window.location.href = '/';
-    } catch (err) {
-      console.error('Failed to sign out:', err);
-    }
-  };
+
+      if (res.ok) {
+        setChats(prev => prev.filter(c => c._id !== selectedDeleteChat._id));
+      } else {
+        alert('Failed to delete chat.');
+      }
+      } catch (err) {
+      console.error('Error deleting chat:', err);
+      }
+    };
+
+    handleDeleteChat();
+  }
 
   return (
-    <Box sx={{ bgcolor: '#121212', minHeight: '100vh', p: 4 }}>
-      <Box display="flex" justifyContent="flex-end" mb={2}>
-        <Button variant="contained" color="error" onClick={handleSignOut}>
-          Sign Out
-        </Button>
-      </Box>
-
+    <Box sx={{ bgcolor: '#121212', minHeight: '100%', p: 4 }}>
       <Typography variant="h4" color="white" gutterBottom sx={{ textAlign: 'center', fontWeight: 'bold' }}>
         Your Chats
       </Typography>
@@ -119,7 +125,7 @@ export default function ChatsPage() {
           + New Chat
         </Button>
       </Box>
-
+      <DialogDeleteChat agreeText='Delete' disagreeText='Cancel' open={openDialog} setOpen={setOpenDialog} handleFunction={deleteChat}/>
       <Grid container spacing={2}>
         {chats.map(chat => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={chat._id}>
@@ -164,20 +170,9 @@ export default function ChatsPage() {
                 }}
                 onClick={async (e) => {
                   e.stopPropagation();
-                  const confirmed = confirm('Delete this chat?');
-                  if (!confirmed) return;
-
-                  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/delete-chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chatId: chat._id }),
-                  });
-
-                  if (res.ok) {
-                    setChats(prev => prev.filter(c => c._id !== chat._id));
-                  } else {
-                    alert('Failed to delete chat.');
-                  }
+                  setDeleteChat(chat);
+                  console.log("Remove");
+                  setOpenDialog(true);
                 }}
               >
                 🗑️

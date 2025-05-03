@@ -9,11 +9,11 @@ export default function LogoutPage() {
     const {setDefault} = useChatContext()
     useEffect(() => {
         const logout = async () => {
-            setDefault();
+            setDefault(true);
             await doLogout();
         };
         logout();
-    }, []);
+    }, [setDefault]);
 
     return (
         <>

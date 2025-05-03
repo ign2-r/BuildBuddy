@@ -141,7 +141,7 @@ productSchema.statics.addSpec = async function (productId, name = null, speed, w
  * @param {number} limit the amount of returns - optional, default 25.
  */
 productSchema.statics.getCategory = function (category, limit = 25) {
-    return this.find({ category: category }).limit(limit);
+    return this.find({ category: category }).sort({ releaseDate: -1 }).limit(limit);
 };
 
 /**
@@ -162,32 +162,158 @@ productSchema.statics.findByName = function (product) {
     return this.find({ name: new RegExp(name, "i") });
 };
 
-productSchema.statics.recSearch = function (category, minPrice, maxPrice, keywords) {
-    const pipeline = {
-        category: category,
-        msrpPrice: {
-            $gte: minPrice,
-            $lte: maxPrice,
+productSchema.statics.recSearch = function (category, minPrice, maxPrice, keywords, limit) {
+    console.debug(`Starting rec search with ${category}, ${minPrice}, ${maxPrice}, ${keywords}`);
+    const regex = keywords.length !== 0 ? new RegExp(keywords.map((k) => k.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")).join("|"), "i") : new RegExp(/.*/g);
+
+    const pipeline = [
+        {
+            $match: {
+                category: new RegExp(category, "i"),
+            },
         },
-        $or: [
-            {
-                name: {
-                    $in: keywords,
+        {
+            $addFields: {
+                score: {
+                    $add: [
+                        // +10 for matching msrpPrice
+                        {
+                            $cond: [
+                                {
+                                    $and: [{ $gte: ["$msrpPrice", minPrice] }, { $lte: ["$msrpPrice", maxPrice] }],
+                                },
+                                10,
+                                0,
+                            ],
+                        },
+                        // +5 × (number of brand matches)
+                        {
+                            $multiply: [
+                                {
+                                    $size: {
+                                        $regexFindAll: {
+                                            input: { $ifNull: ["$brand", ""] },
+                                            regex,
+                                        },
+                                    },
+                                },
+                                5,
+                            ],
+                        },
+
+                        // +5 × (number of matches in size)
+                        {
+                            $multiply: [
+                                {
+                                    $size: {
+                                        $filter: {
+                                            input: { $ifNull: ["$size", []] },
+                                            as: "str",
+                                            cond: {
+                                                $regexMatch: {
+                                                    input: { $toString: "$$str" },
+                                                    regex,
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                                5,
+                            ],
+                        },
+
+                        // +3 × (number of matches in otherStrings)
+                        {
+                            $multiply: [
+                                {
+                                    $size: {
+                                        $filter: {
+                                            input: { $ifNull: ["$other", []] },
+                                            as: "str",
+                                            cond: {
+                                                $regexMatch: {
+                                                    input: { $toString: "$$str" },
+                                                    regex,
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                                3,
+                            ],
+                        },
+
+                        // +2 × (number of matches in aesthetic)
+                        {
+                            $multiply: [
+                                {
+                                    $size: {
+                                        $filter: {
+                                            input: { $ifNull: ["$aesthetic", []] },
+                                            as: "str",
+                                            cond: {
+                                                $regexMatch: {
+                                                    input: { $toString: "$$str" },
+                                                    regex,
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                                2,
+                            ],
+                        },
+                        // +1 × (number of name matches)
+                        {
+                            $multiply: [
+                                {
+                                    $size: {
+                                        $regexFindAll: {
+                                            input: { $ifNull: ["$name", ""] },
+                                            regex,
+                                        },
+                                    },
+                                },
+                                1,
+                            ],
+                        },
+
+                        // +1 × (number of description matches)
+                        {
+                            $multiply: [
+                                {
+                                    $size: {
+                                        $regexFindAll: {
+                                            input: { $ifNull: ["$description", ""] },
+                                            regex,
+                                        },
+                                    },
+                                },
+                                1,
+                            ],
+                        },
+                    ],
                 },
             },
-            {
-                brand: {
-                    $in: keywords,
-                },
+        },
+        { $sort: { score: -1, releaseDate: -1 } },
+        {
+            $project: {
+                _id: 1,
+                category: 1,
+                name: 1,
+                aesthetic: 1,
+                brand: 1,
+                description: 1,
+                msrpPrice: 1,
+                releaseDate: 1,
+                specs: 1,
+                score: 1, // include score if you want to inspect it
             },
-            {
-                "specs.other": {
-                    $in: keywords,
-                },
-            },
-        ],
-    };
-    return this.aggregate([{ $match: pipeline }]);
+        },
+        { $limit: limit },
+    ];
+    return this.aggregate(pipeline);
 };
 
 // ===========================================Queries================================================
@@ -198,7 +324,9 @@ productSchema.statics.recSearch = function (category, minPrice, maxPrice, keywor
  * @returns {Product}
  */
 productSchema.query.msrpPriceRange = function (minPrice, maxPrice) {
-    return this.find({ msrpPrice: { $gte: minPrice, $lte: maxPrice } }).sort({ msrpPrice: 1 });
+    return this.find({ msrpPrice: { $gte: minPrice, $lte: maxPrice } }).sort({
+        msrpPrice: 1,
+    });
 };
 
 /**
@@ -208,7 +336,11 @@ productSchema.query.msrpPriceRange = function (minPrice, maxPrice) {
  */
 productSchema.query.searchByKeywords = function (keywords) {
     const query = {
-        $or: [{ name: { $in: keywords } }, { brand: { $in: keywords } }, { "specs.other": { $in: keywords } }],
+        $or: [
+            { name: { $in: keywords.map((k) => new RegExp(k, "i")) } },
+            { brand: { $in: keywords.map((k) => new RegExp(k, "i")) } },
+            { "specs.other": { $in: keywords.map((k) => new RegExp(k, "i")) } },
+        ],
     };
 
     if (keywords.length === 0) {

@@ -43,6 +43,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     ],
     session: {
         strategy: "jwt",
+        maxAge: 60*60*24*7,
+        updateAge: 60*60*24,
     },
     // Callbacks used to add specific info needed from db
     callbacks: {
@@ -57,7 +59,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.role = user.role;
         }
             // console.debug("user:", user, "token:", token);
-            return token;
+            return token; 
         },
         async session({ session, token }) {
             // user id is stored in ._id when using credentials provider
