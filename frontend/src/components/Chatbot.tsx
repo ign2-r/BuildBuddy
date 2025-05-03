@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { Box, Typography, Paper, TextField, Button } from "@mui/material";
 import { useChatContext } from "@/context/ChatContext";
 import { generateAccessToken } from "@/app/actions/jwt";
+import { motion } from "framer-motion";
 
 const Chatbot: React.FC = () => {
     const { isLoadingMain, messages, chat, setMessages, setRecommendations, setIsLoading, user } = useChatContext();
@@ -102,16 +103,14 @@ const Chatbot: React.FC = () => {
                 }}
             >
                 {messages.map((msg, index) => (
-                    <Box
+                    <motion.div
                         key={index}
-                        sx={{
-                            display: "flex",
-                            justifyContent: msg.role === "user" ? "flex-end" : "flex-start",
-                            width: "100%",
-                            mb: 1,
-                        }}
+                        initial={{ opacity: 0, y: 30, scale: msg.role === "user" ? 0.95 : 1 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30, duration: 0.4 }}
+                        style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start", width: "100%", marginBottom: 8 }}
                     >
-                        <Paper
+                        <Box
                             sx={{
                                 p: 1.5,
                                 borderRadius: 3,
@@ -121,12 +120,12 @@ const Chatbot: React.FC = () => {
                                 textAlign: msg.role === "assistant" ? "left" : "right",
                                 boxShadow: 1,
                                 wordBreak: "break-word",
-                                whiteSpace: "pre-wrap",
+                                whiteSpace: "pre-wrap"
                             }}
                         >
                             <Typography variant="body2">{msg.content}</Typography>
-                        </Paper>
-                    </Box>
+                        </Box>
+                    </motion.div>
                 ))}
             </Box>
 

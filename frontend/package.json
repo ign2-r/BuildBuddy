@@ -21,7 +21,7 @@
     "bcrypt": "^5.1.1",
     "canvas-confetti": "^1.9.3",
     "dayjs": "^1.11.13",
-    "framer-motion": "^12.4.7",
+    "framer-motion": "^12.9.4",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.13.1",
     "next": "^15.2.4",
