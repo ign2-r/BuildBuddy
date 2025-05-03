@@ -1,8 +1,8 @@
 'use client';
 
-import { Box, Typography, Button, Stepper, Step, StepLabel, StepContent, Paper, Chip, Divider, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { Box, Typography, Button, Stepper, Step, StepLabel, StepContent, Paper, Chip, Divider, List, ListItem, ListItemIcon, ListItemText, useTheme, useMediaQuery, IconButton, Drawer } from '@mui/material';
 import Chatbot from '@/components/Chatbot';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import confetti from 'canvas-confetti';
@@ -14,6 +14,7 @@ import TipsAndUpdatesIcon from '@mui/icons-material/TipsAndUpdates';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import ChatIcon from '@mui/icons-material/Chat';
 
 const requiredTools = [
   'Phillips-head screwdriver (#2)',
@@ -275,11 +276,26 @@ const steps: StepType[] = [
 
 export default function BuildGuidePage() {
     const [activeStep, setActiveStep] = useState(0);
+    const [chatOpen, setChatOpen] = useState(false);
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+    // Step refs for auto-scroll
+    const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
 
     const handleNext = () => {
         if (activeStep < steps.length - 1) {
             const next = activeStep + 1;
             setActiveStep(next);
+
+            // Scroll to next step after state update
+            setTimeout(() => {
+                const nextStepRef = stepRefs.current[next];
+                if (nextStepRef) {
+                    nextStepRef.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
 
             if (steps[next]?.isFinal) {
                 toast.success('🎉 Build complete! Enjoy your new PC!', {
@@ -313,23 +329,51 @@ export default function BuildGuidePage() {
         <Box height="100vh" display="flex" flexDirection="column" overflow="hidden">
             <ToastContainer />
 
-            <Box display="flex" flexDirection={{xs: 'column', md: 'row'}} flexGrow={1} minHeight={0} sx={{ p: {xs: 1, sm: 2, md: 3}, bgcolor: '#121212' }}>
+            <Box
+                display="flex"
+                flexDirection={{ xs: 'column', md: 'row' }}
+                flexGrow={1}
+                minHeight={0}
+                sx={{ p: { xs: 1, sm: 2, md: 3 }, bgcolor: '#121212', height: '100%' }}
+            >
                 <Box
                     sx={{
-                        width: {xs: '100%', md: '50%'},
-                        height: {xs: 'calc(50vh - 56px)', md: '100%'},
+                        width: { xs: '100%', md: '50%' },
+                        height: { xs: '100%', md: '100%' }, 
                         bgcolor: '#1E1E1E',
                         color: 'white',
-                        p: {xs: 2, sm: 3, md: 4},
+                        p: { xs: 2, sm: 3, md: 4 },
                         borderRadius: 3,
                         boxShadow: 3,
                         overflowY: 'auto',
-                        mb: {xs: 2, md: 0},
-                        mr: {xs: 0, md: 2},
+                        mb: { xs: 2, md: 0 },
+                        mr: { xs: 0, md: 2 },
                         minHeight: 0,
+                        position: 'relative',
                     }}
                 >
-                    <Typography variant="h5" gutterBottom sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                    {/* Chat button at top right on mobile */}
+                    {isMobile && (
+                        <IconButton
+                            onClick={() => setChatOpen(true)}
+                            sx={{
+                                position: 'absolute',
+                                top: 12,
+                                right: 12,
+                                bgcolor: '#2196f3',
+                                color: 'white',
+                                zIndex: 1301,
+                                boxShadow: 3,
+                                '&:hover': { bgcolor: '#1976d2' }
+                            }}
+                            size="large"
+                            aria-label="Open chat"
+                        >
+                            <ChatIcon fontSize="large" />
+                        </IconButton>
+                    )}
+
+                    <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <BuildIcon /> PC Build Guide
                     </Typography>
 
@@ -379,112 +423,170 @@ export default function BuildGuidePage() {
                                     )}
                                 </StepLabel>
                                 <StepContent>
-                                    <Typography sx={{ color: 'white', mb: 2, whiteSpace: 'pre-line' }}>
-                                        {step.description}
-                                    </Typography>
+                                    {/* Attach ref to each step's content */}
+                                    <div ref={el => stepRefs.current[index] = el}>
+                                        <Typography sx={{ color: 'white', mb: 2, whiteSpace: 'pre-line' }}>
+                                            {step.description}
+                                        </Typography>
 
-                                    {step.warnings?.length > 0 && (
-                                        <Box sx={{mt: 2, mb: 2}}>
-                                            <Typography variant="subtitle2" sx={{display: 'flex', alignItems: 'center', color: '#f44336', mb: 1}}>
-                                                <WarningIcon sx={{mr: 1}} /> Common Mistakes to Avoid:
-                                            </Typography>
-                                            <Paper elevation={2} sx={{bgcolor: 'rgba(244, 67, 54, 0.1)', p: 1, borderLeft: '4px solid #f44336'}}>
-                                                <List dense>
-                                                    {step.warnings.map((warning, idx) => (
-                                                        <ListItem key={idx} sx={{py: 0}}>
-                                                            <ListItemIcon sx={{minWidth: '36px'}}>
-                                                                <WarningIcon fontSize="small" sx={{color: '#f44336'}} />
-                                                            </ListItemIcon>
-                                                            <ListItemText primary={warning} sx={{color: '#f7f7f7'}} />
-                                                        </ListItem>
-                                                    ))}
-                                                </List>
-                                            </Paper>
-                                        </Box>
-                                    )}
+                                        {step.warnings?.length > 0 && (
+                                            <Box sx={{mt: 2, mb: 2}}>
+                                                <Typography variant="subtitle2" sx={{display: 'flex', alignItems: 'center', color: '#f44336', mb: 1}}>
+                                                    <WarningIcon sx={{mr: 1}} /> Common Mistakes to Avoid:
+                                                </Typography>
+                                                <Paper elevation={2} sx={{bgcolor: 'rgba(244, 67, 54, 0.1)', p: 1, borderLeft: '4px solid #f44336'}}>
+                                                    <List dense>
+                                                        {step.warnings.map((warning, idx) => (
+                                                            <ListItem key={idx} sx={{py: 0}}>
+                                                                <ListItemIcon sx={{minWidth: '36px'}}>
+                                                                    <WarningIcon fontSize="small" sx={{color: '#f44336'}} />
+                                                                </ListItemIcon>
+                                                                <ListItemText primary={warning} sx={{color: '#f7f7f7'}} />
+                                                            </ListItem>
+                                                        ))}
+                                                    </List>
+                                                </Paper>
+                                            </Box>
+                                        )}
 
-                                    {step.tips?.length > 0 && (
-                                        <Box sx={{mt: 2, mb: 3}}>
-                                            <Typography variant="subtitle2" sx={{display: 'flex', alignItems: 'center', color: '#ffab40', mb: 1}}>
-                                                <TipsAndUpdatesIcon sx={{mr: 1}} /> Pro Tips:
-                                            </Typography>
-                                            <Paper elevation={2} sx={{bgcolor: 'rgba(255, 171, 64, 0.1)', p: 1, borderLeft: '4px solid #ffab40'}}>
-                                                <List dense>
-                                                    {step.tips.map((tip, idx) => (
-                                                        <ListItem key={idx} sx={{py: 0}}>
-                                                            <ListItemIcon sx={{minWidth: '36px'}}>
-                                                                <ThumbUpIcon fontSize="small" sx={{color: '#ffab40'}} />
-                                                            </ListItemIcon>
-                                                            <ListItemText primary={tip} sx={{color: '#f7f7f7'}} />
-                                                        </ListItem>
-                                                    ))}
-                                                </List>
-                                            </Paper>
-                                        </Box>
-                                    )}
+                                        {step.tips?.length > 0 && (
+                                            <Box sx={{mt: 2, mb: 3}}>
+                                                <Typography variant="subtitle2" sx={{display: 'flex', alignItems: 'center', color: '#ffab40', mb: 1}}>
+                                                    <TipsAndUpdatesIcon sx={{mr: 1}} /> Pro Tips:
+                                                </Typography>
+                                                <Paper elevation={2} sx={{bgcolor: 'rgba(255, 171, 64, 0.1)', p: 1, borderLeft: '4px solid #ffab40'}}>
+                                                    <List dense>
+                                                        {step.tips.map((tip, idx) => (
+                                                            <ListItem key={idx} sx={{py: 0}}>
+                                                                <ListItemIcon sx={{minWidth: '36px'}}>
+                                                                    <ThumbUpIcon fontSize="small" sx={{color: '#ffab40'}} />
+                                                                </ListItemIcon>
+                                                                <ListItemText primary={tip} sx={{color: '#f7f7f7'}} />
+                                                            </ListItem>
+                                                        ))}
+                                                    </List>
+                                                </Paper>
+                                            </Box>
+                                        )}
 
-                                    <Divider sx={{mt: 2, mb: 2, bgcolor: 'rgba(255, 255, 255, 0.1)'}} />
+                                        <Divider sx={{mt: 2, mb: 2, bgcolor: 'rgba(255, 255, 255, 0.1)'}} />
 
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
-                                        {!step.isFinal && (
-                                            <Button 
-                                                variant="contained" 
-                                                onClick={handleNext} 
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
+                                            {!step.isFinal && (
+                                                <Button 
+                                                    variant="contained" 
+                                                    onClick={handleNext} 
+                                                    sx={{
+                                                        bgcolor: '#4caf50',
+                                                        '&:hover': { bgcolor: '#45a049' }
+                                                    }}
+                                                >
+                                                    Complete Step
+                                                </Button>
+                                            )}
+                                            {index > 0 && (
+                                                <Button 
+                                                    variant="contained" 
+                                                    onClick={handleBack}
+                                                    sx={{
+                                                        bgcolor: '#616161',
+                                                        '&:hover': { bgcolor: '#484848' }
+                                                    }}
+                                                >
+                                                    Back
+                                                </Button>
+                                            )}
+                                            <Button
+                                                variant="contained"
+                                                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(step.query)}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                startIcon={<YouTubeIcon />}
                                                 sx={{
-                                                    bgcolor: '#4caf50',
-                                                    '&:hover': { bgcolor: '#45a049' }
+                                                    bgcolor: '#e57373',
+                                                    color: 'white',
+                                                    '&:hover': { bgcolor: '#ef5350' },
                                                 }}
                                             >
-                                                Complete Step
+                                                Watch Tutorial
                                             </Button>
-                                        )}
-                                        {index > 0 && (
-                                            <Button 
-                                                variant="contained" 
-                                                onClick={handleBack}
-                                                sx={{
-                                                    bgcolor: '#616161',
-                                                    '&:hover': { bgcolor: '#484848' }
-                                                }}
-                                            >
-                                                Back
-                                            </Button>
-                                        )}
-                                        <Button
-                                            variant="contained"
-                                            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(step.query)}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            startIcon={<YouTubeIcon />}
-                                            sx={{
-                                                bgcolor: '#e57373',
-                                                color: 'white',
-                                                '&:hover': { bgcolor: '#ef5350' },
-                                            }}
-                                        >
-                                            Watch Tutorial
-                                        </Button>
-                                    </Box>
+                                        </Box>
+                                    </div>
                                 </StepContent>
                             </Step>
                         ))}
                     </Stepper>
+
+                    {/* Show chat button on mobile */}
+                    {isMobile && (
+                        <IconButton
+                            onClick={() => setChatOpen(true)}
+                            sx={{
+                                position: 'fixed',
+                                bottom: 24,
+                                right: 24,
+                                bgcolor: '#2196f3',
+                                color: 'white',
+                                zIndex: 1301,
+                                boxShadow: 3,
+                                '&:hover': { bgcolor: '#1976d2' }
+                            }}
+                            size="large"
+                            aria-label="Open chat"
+                        >
+                            <ChatIcon fontSize="large" />
+                        </IconButton>
+                    )}
                 </Box>
 
-                <Box
-                    sx={{
-                        width: {xs: '100%', md: '50%'},
-                        height: {xs: 'calc(50vh - 70px)', md: '100%'},
-                        bgcolor: 'white',
-                        color: 'black',
-                        p: 2,
-                        borderRadius: 3,
-                        boxShadow: 3,
-                        minHeight: 0,
+                {/* Desktop: show chat inline */}
+                {!isMobile && (
+                    <Box
+                        sx={{
+                            width: {xs: '100%', md: '50%'},
+                            height: {xs: 'calc(50vh - 70px)', md: '100%'},
+                            bgcolor: 'white',
+                            color: 'black',
+                            p: 2,
+                            borderRadius: 3,
+                            boxShadow: 3,
+                            minHeight: 0,
+                        }}
+                    >
+                        <Chatbot />
+                    </Box>
+                )}
+
+                {/* Mobile: chat in drawer */}
+                <Drawer
+                    anchor="right"
+                    open={chatOpen}
+                    onClose={() => setChatOpen(false)}
+                    PaperProps={{
+                        sx: {
+                            width: '100%',
+                            maxWidth: 400,
+                            bgcolor: 'white',
+                            color: 'black',
+                            p: 2,
+                        }
+                    }}
+                    ModalProps={{
+                        keepMounted: true,
                     }}
                 >
-                    <Chatbot />
-                </Box>
+                    <Box display="flex" flexDirection="column" height="100%">
+                        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+                            <Typography variant="h6">Chat Assistant</Typography>
+                            <IconButton onClick={() => setChatOpen(false)}>
+                                <span style={{fontSize: 24, fontWeight: 'bold'}}>×</span>
+                            </IconButton>
+                        </Box>
+                        <Box flexGrow={1} minHeight={0}>
+                            <Chatbot />
+                        </Box>
+                    </Box>
+                </Drawer>
             </Box>
         </Box>
     );
