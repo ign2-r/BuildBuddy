@@ -183,6 +183,12 @@ export default function ChatsPage() {
     }
   };
 
+  const sortedChats = [...chats].sort((a, b) => {
+    const aLastMsg = a.messages?.length ? a.messages[a.messages.length - 1]?.createdAt : a.updatedAt || a.createdAt;
+    const bLastMsg = b.messages?.length ? b.messages[b.messages.length - 1]?.createdAt : b.updatedAt || b.createdAt;
+    return new Date(bLastMsg).getTime() - new Date(aLastMsg).getTime();
+  });
+
   return (
     <Box sx={{ bgcolor: '#121212', minHeight: '100%', p: 4 }}>
       <Typography variant="h4" color="white" gutterBottom sx={{ textAlign: 'center', fontWeight: 'bold' }}>
@@ -197,7 +203,7 @@ export default function ChatsPage() {
       <DialogDeleteChat agreeText='Delete' disagreeText='Cancel' open={openDialog} setOpen={setOpenDialog} handleFunction={deleteChat}/>
       <Grid container spacing={3} sx={{ mt: 2 }}>
         <AnimatePresence>
-          {chats.map((chat: any) => (
+          {sortedChats.map((chat: any) => (
             <Grid
               item
               xs={12}
