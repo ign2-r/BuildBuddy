@@ -5,15 +5,40 @@ import { Box, Typography, Paper, TextField, Button } from "@mui/material";
 import { useChatContext } from "@/context/ChatContext";
 import { generateAccessToken } from "@/app/actions/jwt";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
+
+// NEEDS BACKEND IMPLEMENTATION FOR TRUE SECURITY
+const MESSAGE_COOLDOWN_MS = 3000; // 3 seconds between messages
+const DAILY_LIMIT = 50;
+const SESSION_LIMIT = 100;
 
 const Chatbot: React.FC = () => {
     const { isLoadingMain, messages, chat, setMessages, setRecommendations, setIsLoading, user } = useChatContext();
     const [userInput, setUserInput] = useState("");
+    const [lastSent, setLastSent] = useState<number>(0);
+    const [dailyCount, setDailyCount] = useState<number>(0);
+    const [sessionCount, setSessionCount] = useState<number>(0);
     const userId = user?._id;
 
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    console.log(chat, userId);
+    // Load daily count from localStorage
+    useEffect(() => {
+        const today = new Date().toISOString().slice(0, 10);
+        const stored = localStorage.getItem(`chat_daily_count_${userId}_${today}`);
+        setDailyCount(stored ? parseInt(stored, 10) : 0);
+    }, [userId]);
+
+    // Save daily count to localStorage
+    useEffect(() => {
+        const today = new Date().toISOString().slice(0, 10);
+        localStorage.setItem(`chat_daily_count_${userId}_${today}`, dailyCount.toString());
+    }, [dailyCount, userId]);
+
+    // Track session count
+    useEffect(() => {
+        setSessionCount(messages.filter(m => m.role === "user").length);
+    }, [messages]);
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -21,18 +46,41 @@ const Chatbot: React.FC = () => {
         }
     }, [messages]);
 
+    // Helper: Check for repeated/spam messages
+    const isSpam = (input: string) => {
+        if (!input.trim()) return true;
+        const lastMsg = messages.filter(m => m.role === "user").at(-1)?.content;
+        return lastMsg && lastMsg.trim() === input.trim();
+    };
+
     // Handle sending
     const handleSend = async () => {
-        if (userInput.trim() === "") return;
+        const now = Date.now();
 
-        const MAX_MESSAGES = 100;
-        const totalMessages = messages.filter((m) => m.role === "user" || m.role === "assistant").length;
-
-        if (totalMessages >= MAX_MESSAGES) {
-            setMessages((prev) => [...prev, { role: "assistant", content: "❌ You've reached the message limit for this conversation." }]);
-            setUserInput("");
+        if (isLoadingMain) return;
+        if (!userInput.trim()) {
+            toast.error("Message cannot be empty.");
             return;
         }
+        if (isSpam(userInput)) {
+            toast.error("Please do not send repeated or spam messages.");
+            return;
+        }
+        if (now - lastSent < MESSAGE_COOLDOWN_MS) {
+            toast.error("You're sending messages too quickly. Please wait a moment.");
+            return;
+        }
+        if (dailyCount >= DAILY_LIMIT) {
+            toast.error("You have reached your daily message limit. Please try again tomorrow.");
+            return;
+        }
+        if (sessionCount >= SESSION_LIMIT) {
+            toast.error("You have reached the maximum messages for this session.");
+            return;
+        }
+
+        setLastSent(now);
+        setDailyCount(dailyCount + 1);
 
         const userMessage = { role: "user", content: userInput };
         setMessages((prev) => [...prev, userMessage]);
@@ -40,34 +88,31 @@ const Chatbot: React.FC = () => {
         setIsLoading(true);
 
         try {
-            setMessages((prev) => [...prev, {role: "assistant", content: "🤔💭 Let me think about that..."}]);
+            setMessages((prev) => [...prev, { role: "assistant", content: "🤔💭 Let me think about that..." }]);
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/recommend`, {
                 method: "POST",
-                headers: { 'Content-Type': 'application/json', 'Authorization': `bearer ${await generateAccessToken(user)}` },
-                body: JSON.stringify({ chatId: chat?._id, userId: userId, message: userInput }),
-              });
-              
-              if (!response.ok) {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `bearer ${await generateAccessToken(user)}`
+                },
+                body: JSON.stringify({ chatId: chat?._id, userId, message: userInput }),
+            });
+
+            if (!response.ok) {
                 const errorDetails = await response.text();
-                console.error("Backend API Error:", errorDetails);
                 setMessages((prev) => [...prev, { role: "assistant", content: `Error: ${errorDetails}` }]);
                 setIsLoading(false);
                 return;
-              }
-              
-              const data = (await response.json()).message;
-              console.log("🧠 Full bot response:", data);
-              
-            setMessages((prev) => [...prev.slice(0, -1), { role: "assistant", content: data.content }]);
+            }
 
+            const data = (await response.json()).message;
+            setMessages((prev) => [...prev.slice(0, -1), { role: "assistant", content: data.content }]);
             if (data.recommendation && setRecommendations) {
-                console.log("📦 Setting recommendations:", data.recommendation);
                 setRecommendations((prev) => [...prev, data.recommendation]);
             } else if (setRecommendations) {
                 setRecommendations([]);
             }
         } catch (error) {
-            console.error("Error sending message:", error);
             setMessages((prev) => [...prev, { role: "assistant", content: "Error connecting to the server." }]);
         } finally {
             setIsLoading(false);
