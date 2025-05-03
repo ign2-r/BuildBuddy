@@ -1,6 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
-const { processRecommendation } = require("../controllers/chatbotController");
+const { processRecommendation, processGuide } = require("../controllers/chatbotController");
 const { createChat, getChat, getChatById, renameChat } = require("../controllers/chatController");
 const { getMessages } = require("../controllers/chatController");
 const { deleteChat } = require('../controllers/chatController');
@@ -15,9 +15,11 @@ router.post('/delete-chat', authenticateBearer, deleteChat);
 router.post('/rename-chat', authenticateBearer, renameChat);
 
 router.post("/recommend", authenticateBearer, processRecommendation);
+router.post("/guide", authenticateBearer, processGuide)
 
 router.get("/get-messages", authenticateBearer, getMessages);
 router.get("/get-chat-id", authenticateBearer, getChatById);
+
 
 module.exports = router;
 

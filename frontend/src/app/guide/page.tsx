@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Typography, Button, Stepper, Step, StepLabel, StepContent, Paper, Chip, Divider, List, ListItem, ListItemIcon, ListItemText, useTheme, useMediaQuery, IconButton, Drawer } from '@mui/material';
-import Chatbot from '@/components/Chatbot';
+import ChatbotBuild from '@/components/ChatbotBuild';
 import { useState, useRef } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -26,7 +26,7 @@ const requiredTools = [
 ];
 
 // Type for step
-type StepType = {
+export type StepType = {
     label: string;
     description: string;
     difficulty: 'Easy' | 'Moderate' | 'Challenging';
@@ -544,7 +544,7 @@ export default function BuildGuidePage() {
                             minHeight: 0,
                         }}
                     >
-                        <Chatbot />
+                        <ChatbotBuild step={steps[activeStep]} />
                     </Box>
                 )}
 
@@ -574,7 +574,7 @@ export default function BuildGuidePage() {
                             </IconButton>
                         </Box>
                         <Box flexGrow={1} minHeight={0}>
-                            <Chatbot />
+                            <ChatbotBuild step={steps[activeStep]} />
                         </Box>
                     </Box>
                 </Drawer>
