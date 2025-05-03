@@ -85,6 +85,10 @@ async function obtainChatResponse(messages, withTools) {
 
     try {
         const response = await client.chat.completions.create(params);
+        // if (response.status !== 200){
+        //     console.error("🚨 OpenAI SDK Error: Invalid");
+        //     throw new Error("Something went wrong with chatbot");
+        // }
         if (!response || !response.choices || response.choices.length === 0) {
             console.error("🚨 OpenAI SDK Error: No response or choices found");
             return res.status(500).json({

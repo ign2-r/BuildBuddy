@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Box, Typography, Paper, TextField, Button } from "@mui/material";
+import { Box, Typography, TextField, Button } from "@mui/material";
 import { useChatContext } from "@/context/ChatContext";
 import { generateAccessToken } from "@/app/actions/jwt";
 import { motion } from "framer-motion";
@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 const Chatbot: React.FC = () => {
     const { isLoadingMain, messages, chat, setMessages, setRecommendations, setIsLoading, user } = useChatContext();
     const [userInput, setUserInput] = useState("");
+    const [hasRec, sethasRec] = useState(false);
     const userId = user?._id;
 
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -20,6 +21,12 @@ const Chatbot: React.FC = () => {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [messages]);
+
+    useEffect(() => {
+        if(chat?.recommendation){
+            sethasRec(true);
+        }
+    }, [chat]);
 
     // Handle sending
     const handleSend = async () => {
@@ -62,8 +69,9 @@ const Chatbot: React.FC = () => {
 
             if (data.recommendation && setRecommendations) {
                 console.log("📦 Setting recommendations:", data.recommendation);
+                sethasRec(true);
                 setRecommendations((prev) => [...prev, data.recommendation]);
-            } else if (setRecommendations) {
+            } else if (setRecommendations && !hasRec) {
                 setRecommendations([]);
             }
         } catch (error) {

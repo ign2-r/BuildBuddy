@@ -1,7 +1,7 @@
 "use client";
 
 import { useChatContext } from "@/context/ChatContext";
-import { Box, Typography, Card, CardContent, CardActions, Button } from "@mui/material";
+import { Box, Typography, Card, CardContent, Button } from "@mui/material";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 

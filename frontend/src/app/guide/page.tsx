@@ -368,7 +368,7 @@ export default function BuildGuidePage() {
                     {activeStep === 0 && (
                         <Paper elevation={3} sx={{p: 2, mb: 3, bgcolor: '#2a2a2a', color: 'white'}}>
                             <Typography variant="h6" gutterBottom>
-                                Tools You'll Need:
+                                {`Tools You will Need:`}
                             </Typography>
                             <List dense>
                                 {requiredTools.map((tool, index) => (

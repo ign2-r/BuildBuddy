@@ -73,13 +73,13 @@ export interface Message {
 }
 
 export interface Chat {
-    _id?: string;
+    _id: string;
     display: string;
     creator: string | User;
     archived?: boolean;
-    createdAt?: Date;
-    updatedAt?: Date;
-    messages?: Message[];
+    createdAt: Date | string;
+    updatedAt: Date;
+    messages: Message[];
     recommendation: Recommendation[];
 }
 

@@ -6,7 +6,7 @@ import { Grid2 as Grid } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useChatContext } from "@/context/ChatContext";
 import { useSession } from "next-auth/react";
-import { Chat } from "@/utils/db";
+import { Chat, Message } from "@/utils/db";
 import DialogDeleteChat from "@/components/DialogDeleteChat";
 import { generateAccessToken } from "@/app/actions/jwt";
 import { format } from "date-fns";
@@ -17,8 +17,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import { motion, AnimatePresence } from "framer-motion";
 
 // generate a title from the first user message
-function getChatTitle(messages: any[]) {
-    const firstUserMsg = messages?.find((m: any) => m.role === "user")?.content;
+function getChatTitle(messages: Message[]) {
+    const firstUserMsg = messages?.find((m: Message) => m.role === "user")?.content;
     if (firstUserMsg) {
         const words = firstUserMsg.trim().split(" ");
         return words.slice(0, 6).join(" ") + (words.length > 6 ? "..." : "");
@@ -27,8 +27,8 @@ function getChatTitle(messages: any[]) {
 }
 
 // get a preview from the latest message
-function getChatPreview(messages: any[]) {
-  const lastMsg = messages?.at(-1).content;
+function getChatPreview(messages: Message[]) {
+  const lastMsg = messages?.at(-1)?.content ?? "";
   console.log(lastMsg);
     if (lastMsg) {
         return lastMsg.length > 60 ? lastMsg.slice(0, 60) + "..." : "";
@@ -203,7 +203,7 @@ export default function ChatsPage() {
                   exit={{ opacity: 0, y: -30 }}
                   transition={{ duration: 0.4, type: "spring" }}
                 >
-                    {chats.map((chat: any) => (
+                    {chats.map((chat: Chat) => (
                         <Grid key={chat._id} size={{xs: 10, sm: 5, md: 4, lg: 3}} height={"100%"} width={"100%"}>
                             <Card
                               sx={{
@@ -297,7 +297,7 @@ export default function ChatsPage() {
                                         {getChatPreview(chat.messages)}
                                     </Typography>
                                     <Typography variant="caption" sx={{ color: "grey.500", position: "absolute", bottom: 8, right: 16 }}>
-                                        {getFormattedDate(chat.createdAt)}
+                                        {getFormattedDate(chat.createdAt.toString())}
                                     </Typography>
                                 </CardContent>
                                 <IconButton

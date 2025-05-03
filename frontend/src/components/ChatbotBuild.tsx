@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Box, Typography, Paper, TextField, Button } from "@mui/material";
+import { Box, Typography, TextField, Button } from "@mui/material";
 import { useChatContext } from "@/context/ChatContext";
 import { generateAccessToken } from "@/app/actions/jwt";
 import { motion } from "framer-motion";
 import { StepType } from "@/app/guide/page";
 
 const ChatbotBuild: React.FC<{ step: StepType }> = ({ step }) => {
-    const { isLoadingMain, chat, setIsLoading, user } = useChatContext();
+    const { isLoadingMain, setIsLoading, user } = useChatContext();
     const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
     const [allMessages, setAllMessages] = useState<{ role: string; content: string }[]>([]);
 
@@ -24,7 +24,6 @@ const ChatbotBuild: React.FC<{ step: StepType }> = ({ step }) => {
         ];
         setAllMessages(currMsg);
         setMessages(currMsg.filter((msg) => msg.role !== "system"));
-        console.debug(currMsg);
     }, [step]);
 
     useEffect(() => {
