@@ -178,6 +178,12 @@ export default function ChatsPage() {
         }
     };
 
+  const sortedChats = [...chats].sort((a, b) => {
+    const aLastMsg = a.messages?.length ? a.messages[a.messages.length - 1]?.createdAt : a.updatedAt || a.createdAt;
+    const bLastMsg = b.messages?.length ? b.messages[b.messages.length - 1]?.createdAt : b.updatedAt || b.createdAt;
+    return new Date(bLastMsg || 0).getTime() - new Date(aLastMsg || 0).getTime();
+  });
+
     return (
         <Box sx={{ bgcolor: "#121212", minHeight: "100%", p: 4 }}>
             <Typography variant="h4" color="white" gutterBottom sx={{ textAlign: "center", fontWeight: "bold" }}>
@@ -203,7 +209,7 @@ export default function ChatsPage() {
                   exit={{ opacity: 0, y: -30 }}
                   transition={{ duration: 0.4, type: "spring" }}
                 >
-                    {chats.map((chat: Chat) => (
+                    {sortedChats.map((chat: Chat) => (
                         <Grid key={chat._id} size={{xs: 10, sm: 5, md: 4, lg: 3}} height={"100%"} width={"100%"}>
                             <Card
                               sx={{
