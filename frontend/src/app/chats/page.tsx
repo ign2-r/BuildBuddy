@@ -13,6 +13,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import { motion, AnimatePresence } from "framer-motion";
 
 // generate a title from the first user message
 function getChatTitle(messages: any[]) {
@@ -195,117 +196,132 @@ export default function ChatsPage() {
       </Box>
       <DialogDeleteChat agreeText='Delete' disagreeText='Cancel' open={openDialog} setOpen={setOpenDialog} handleFunction={deleteChat}/>
       <Grid container spacing={3} sx={{ mt: 2 }}>
-        {chats.map((chat: any) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={chat._id}>
-            <Card
-              sx={{ bgcolor: "#232323", color: "white", position: "relative", minHeight: 120, cursor: "pointer" }}
-              onClick={() => openChat(chat._id)}
+        <AnimatePresence>
+          {chats.map((chat: any) => (
+            <Grid
+              item
+              xs={12}
+              sm={6}
+              md={4}
+              lg={3}
+              key={chat._id}
+              component={motion.div}
+              layout
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ duration: 0.4, type: "spring" }}
             >
-              <CardContent sx={{ pb: 6, position: "relative" }}>
-                <Box sx={{ display: "flex", alignItems: "center", pr: 6 }}>
-                  {editingChatId === chat._id ? (
-                    <>
-                      <input
-                        value={editingTitle}
-                        onChange={e => setEditingTitle(e.target.value)}
-                        style={{
-                          fontSize: "1.25rem",
-                          fontWeight: "bold",
-                          background: "#232323",
-                          color: "white",
-                          border: "1px solid #444",
-                          borderRadius: 4,
-                          padding: "2px 8px",
-                          marginRight: 8,
-                          flex: 1,
-                        }}
-                        autoFocus
-                        onClick={e => e.stopPropagation()}
-                        onKeyDown={e => {
-                          if (e.key === "Enter") saveChatTitle(chat._id);
-                          if (e.key === "Escape") {
+              <Card
+                sx={{ bgcolor: "#232323", color: "white", position: "relative", minHeight: 120, cursor: "pointer" }}
+                onClick={() => openChat(chat._id)}
+              >
+                <CardContent sx={{ pb: 6, position: "relative" }}>
+                  <Box sx={{ display: "flex", alignItems: "center", pr: 6 }}>
+                    {editingChatId === chat._id ? (
+                      <>
+                        <input
+                          value={editingTitle}
+                          onChange={e => setEditingTitle(e.target.value)}
+                          style={{
+                            fontSize: "1.25rem",
+                            fontWeight: "bold",
+                            background: "#232323",
+                            color: "white",
+                            border: "1px solid #444",
+                            borderRadius: 4,
+                            padding: "2px 8px",
+                            marginRight: 8,
+                            flex: 1,
+                          }}
+                          autoFocus
+                          onClick={e => e.stopPropagation()}
+                          onKeyDown={e => {
+                            if (e.key === "Enter") saveChatTitle(chat._id);
+                            if (e.key === "Escape") {
+                              setEditingChatId(null);
+                              setEditingTitle("");
+                            }
+                          }}
+                        />
+                        <IconButton
+                          size="small"
+                          onClick={e => {
+                            e.stopPropagation();
+                            saveChatTitle(chat._id);
+                          }}
+                          sx={{ color: "lightgreen" }}
+                        >
+                          <CheckIcon />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={e => {
+                            e.stopPropagation();
                             setEditingChatId(null);
                             setEditingTitle("");
+                          }}
+                          sx={{ color: "red" }}
+                        >
+                          <CloseIcon />
+                        </IconButton>
+                      </>
+                    ) : (
+                      <>
+                        <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {
+                            chat.display &&
+                            chat.display.trim() !== "" &&
+                            !/^Chat \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(chat.display.trim()) &&
+                            chat.display.trim() !== getChatTitle(chat.messages)
+                              ? chat.display
+                              : getChatTitle(chat.messages)
                           }
-                        }}
-                      />
-                      <IconButton
-                        size="small"
-                        onClick={e => {
-                          e.stopPropagation();
-                          saveChatTitle(chat._id);
-                        }}
-                        sx={{ color: "lightgreen" }}
-                      >
-                        <CheckIcon />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={e => {
-                          e.stopPropagation();
-                          setEditingChatId(null);
-                          setEditingTitle("");
-                        }}
-                        sx={{ color: "red" }}
-                      >
-                        <CloseIcon />
-                      </IconButton>
-                    </>
-                  ) : (
-                    <>
-                      <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {
-                          chat.display &&
-                          chat.display.trim() !== "" &&
-                          !/^Chat \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(chat.display.trim()) &&
-                          chat.display.trim() !== getChatTitle(chat.messages)
-                            ? chat.display
-                            : getChatTitle(chat.messages)
-                        }
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        onClick={e => {
-                          e.stopPropagation();
-                          setEditingChatId(chat._id);
-                          setEditingTitle(chat.display || getChatTitle(chat.messages));
-                        }}
-                        sx={{ ml: 1, color: "grey.400" }}
-                        aria-label="Rename chat"
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </>
-                  )}
-                </Box>
-                <Typography variant="body2" sx={{ color: "grey.400", mb: 2 }}>
-                  {getChatPreview(chat.messages)}
-                </Typography>
-                <Typography variant="caption" sx={{ color: "grey.500", position: "absolute", bottom: 8, right: 16 }}>
-                  {getFormattedDate(chat.createdAt)}
-                </Typography>
-              </CardContent>
-              <IconButton
-                aria-label="delete"
-                onClick={e => {
-                  e.stopPropagation(); // Prevent card click
-                  handleDelete(chat._id);
-                }}
-                sx={{
-                  position: "absolute",
-                  top: 16,
-                  right: 16,
-                  color: "red",
-                  zIndex: 2,
-                  bgcolor: "#232323",
-                  "&:hover": { bgcolor: "#2e2e2e" }
-                }}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Card>
-          </Grid>
-        ))}
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setEditingChatId(chat._id);
+                            setEditingTitle(chat.display || getChatTitle(chat.messages));
+                          }}
+                          sx={{ ml: 1, color: "grey.400" }}
+                          aria-label="Rename chat"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </>
+                    )}
+                  </Box>
+                  <Typography variant="body2" sx={{ color: "grey.400", mb: 2 }}>
+                    {getChatPreview(chat.messages)}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "grey.500", position: "absolute", bottom: 8, right: 16 }}>
+                    {getFormattedDate(chat.createdAt)}
+                  </Typography>
+                </CardContent>
+                <IconButton
+                  aria-label="delete"
+                  onClick={e => {
+                    e.stopPropagation(); // Prevent card click
+                    handleDelete(chat._id);
+                  }}
+                  sx={{
+                    position: "absolute",
+                    top: 16,
+                    right: 16,
+                    color: "red",
+                    zIndex: 2,
+                    bgcolor: "#232323",
+                    "&:hover": { bgcolor: "#2e2e2e" }
+                  }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Card>
+            </Grid>
+          ))}
+        </AnimatePresence>
       </Grid>
     </Box>
   );
