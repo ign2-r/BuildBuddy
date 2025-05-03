@@ -338,7 +338,7 @@ export default function BuildGuidePage() {
             >
                 <Box
                     sx={{
-                        width: { xs: '100%', md: '50%' },
+                        width: { xs: '100%', md: '60%' }, // 60% on desktop
                         height: { xs: '100%', md: '100%' }, 
                         bgcolor: '#1E1E1E',
                         color: 'white',
@@ -524,7 +524,7 @@ export default function BuildGuidePage() {
                 {!isMobile && (
                     <Box
                         sx={{
-                            width: {xs: '100%', md: '50%'},
+                            width: {xs: '100%', md: '40%'},
                             height: {xs: 'calc(50vh - 70px)', md: '100%'},
                             bgcolor: 'white',
                             color: 'black',
