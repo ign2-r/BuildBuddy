@@ -133,7 +133,7 @@ chatSchema.statics.getUserChats = function (uid) {
         .populate({
             path: "messages",
             match: { role: { $ne: "system" } },
-            options: { sort: { createdAt: -1 }, limit: 2, select: { role: 1, content: 1 } }
+            options: { sort: { updatedAt: -1 }, limit: 5, select: { role: 1, content: 1, updatedAt: 1, createdAt: 1  } }
         });
 }
 
