@@ -49,7 +49,7 @@ const Navbar = () => {
       sx={{
         bgcolor: '#1E1E1E',
         boxShadow: 3,
-        height: { xs: "6vh", sm: "6vh", md: "7vh" }, 
+        // height: { xs: "6vh", sm: "6vh", md: "7vh" }, 
       }}
     >
       <Toolbar

@@ -1,7 +1,7 @@
 "use client";
 
 import { useChatContext } from "@/context/ChatContext";
-import { Box, Typography, Card, CardContent, CardActions, Button } from "@mui/material";
+import { Box, Typography, Card, CardContent, Button } from "@mui/material";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -9,8 +9,7 @@ type Part = {
     _id: string;
     name: string;
     msrpPrice?: number | string;
-    link?: string;
-    links?: { vendor: string; url: string }[];
+    links: { vendor: string; url: string }[];
 };
 
 const RecommendationPanel: React.FC = () => {
@@ -104,19 +103,6 @@ const RecommendationPanel: React.FC = () => {
                                         </Box>
                                     )}
                                 </CardContent>
-                                {part.link && (
-                                    <CardActions>
-                                        <Button
-                                            href={part.link}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            variant="outlined"
-                                            color="info"
-                                        >
-                                            View Product
-                                        </Button>
-                                    </CardActions>
-                                )}
                             </Card>
                         ))}
 

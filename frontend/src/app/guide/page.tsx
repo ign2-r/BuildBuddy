@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Typography, Button, Stepper, Step, StepLabel, StepContent, Paper, Chip, Divider, List, ListItem, ListItemIcon, ListItemText, useTheme, useMediaQuery, IconButton, Drawer } from '@mui/material';
-import Chatbot from '@/components/Chatbot';
+import ChatbotBuild from '@/components/ChatbotBuild';
 import { useState, useRef } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -26,7 +26,7 @@ const requiredTools = [
 ];
 
 // Type for step
-type StepType = {
+export type StepType = {
     label: string;
     description: string;
     difficulty: 'Easy' | 'Moderate' | 'Challenging';
@@ -285,13 +285,15 @@ export default function BuildGuidePage() {
     const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
 
     const handleNext = () => {
+        console.log(activeStep);
         if (activeStep < steps.length - 1) {
             const next = activeStep + 1;
+            console.log("next", next);
             setActiveStep(next);
 
             // Scroll to next step after state update
             setTimeout(() => {
-                const nextStepRef = stepRefs.current[next];
+                const nextStepRef = stepRefs.current[activeStep];
                 if (nextStepRef) {
                     nextStepRef.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
@@ -313,7 +315,14 @@ export default function BuildGuidePage() {
     };
 
     const handleBack = () => {
-        setActiveStep((prev) => Math.max(prev - 1, 0));
+        setActiveStep((prev) => {
+            const lastStep = Math.max(prev - 1, 0); 
+            setTimeout(() => {
+                const nextStepRef = stepRefs.current[lastStep];
+                nextStepRef?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+            return lastStep;
+        });
     };
 
     const getColorForDifficulty = (difficulty: StepType['difficulty']) => {
@@ -326,7 +335,7 @@ export default function BuildGuidePage() {
     };
 
     return (
-        <Box height="100vh" display="flex" flexDirection="column" overflow="hidden">
+        <Box height="100%" display="flex" flexDirection="column" overflow="hidden">
             <ToastContainer />
 
             <Box
@@ -352,8 +361,6 @@ export default function BuildGuidePage() {
                         position: 'relative',
                     }}
                 >
-
-
                     <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <BuildIcon /> PC Build Guide
                     </Typography>
@@ -361,7 +368,7 @@ export default function BuildGuidePage() {
                     {activeStep === 0 && (
                         <Paper elevation={3} sx={{p: 2, mb: 3, bgcolor: '#2a2a2a', color: 'white'}}>
                             <Typography variant="h6" gutterBottom>
-                                Tools You'll Need:
+                                {`Tools You will Need:`}
                             </Typography>
                             <List dense>
                                 {requiredTools.map((tool, index) => (
@@ -378,8 +385,11 @@ export default function BuildGuidePage() {
 
                     <Stepper activeStep={activeStep} orientation="vertical">
                         {steps.map((step, index) => (
-                            <Step key={step.label}>
-                                <StepLabel>
+                            <Step key={step.label} >
+                                <StepLabel 
+                                    onClick={() => setActiveStep(index)} 
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     <Typography sx={{ color: step.isFinal ? '#81c784' : 'white', fontWeight: 'bold' }}>
                                         {step.label}
                                     </Typography>
@@ -405,19 +415,19 @@ export default function BuildGuidePage() {
                                 </StepLabel>
                                 <StepContent>
                                     {/* Attach ref to each step's content */}
-                                    <div ref={el => stepRefs.current[index] = el}>
+                                    <div ref={el => { stepRefs.current[index] = el; }}>
                                         <Typography sx={{ color: 'white', mb: 2, whiteSpace: 'pre-line' }}>
                                             {step.description}
                                         </Typography>
 
-                                        {step.warnings?.length > 0 && (
+                                        {(step.warnings ?? []).length > 0 && (
                                             <Box sx={{mt: 2, mb: 2}}>
                                                 <Typography variant="subtitle2" sx={{display: 'flex', alignItems: 'center', color: '#f44336', mb: 1}}>
                                                     <WarningIcon sx={{mr: 1}} /> Common Mistakes to Avoid:
                                                 </Typography>
                                                 <Paper elevation={2} sx={{bgcolor: 'rgba(244, 67, 54, 0.1)', p: 1, borderLeft: '4px solid #f44336'}}>
                                                     <List dense>
-                                                        {step.warnings.map((warning, idx) => (
+                                                        {step.warnings?.map((warning, idx) => (
                                                             <ListItem key={idx} sx={{py: 0}}>
                                                                 <ListItemIcon sx={{minWidth: '36px'}}>
                                                                     <WarningIcon fontSize="small" sx={{color: '#f44336'}} />
@@ -430,14 +440,14 @@ export default function BuildGuidePage() {
                                             </Box>
                                         )}
 
-                                        {step.tips?.length > 0 && (
+                                        {(step.tips ?? []).length > 0 && (
                                             <Box sx={{mt: 2, mb: 3}}>
                                                 <Typography variant="subtitle2" sx={{display: 'flex', alignItems: 'center', color: '#ffab40', mb: 1}}>
                                                     <TipsAndUpdatesIcon sx={{mr: 1}} /> Pro Tips:
                                                 </Typography>
                                                 <Paper elevation={2} sx={{bgcolor: 'rgba(255, 171, 64, 0.1)', p: 1, borderLeft: '4px solid #ffab40'}}>
                                                     <List dense>
-                                                        {step.tips.map((tip, idx) => (
+                                                        {step.tips?.map((tip, idx) => (
                                                             <ListItem key={idx} sx={{py: 0}}>
                                                                 <ListItemIcon sx={{minWidth: '36px'}}>
                                                                     <ThumbUpIcon fontSize="small" sx={{color: '#ffab40'}} />
@@ -499,13 +509,13 @@ export default function BuildGuidePage() {
                     </Stepper>
 
                     {/* Show chat button on mobile */}
-                    {isMobile && (
+                    {isMobile && !chatOpen && (
                         <IconButton
                             onClick={() => setChatOpen(true)}
                             sx={{
-                                position: 'absolute',
-                                bottom: 24,
-                                right: 24,
+                                position: 'fixed', // Changed to fixed for sticky behavior
+                                bottom: 50,
+                                right: 50,
                                 bgcolor: '#2196f3',
                                 color: 'white',
                                 zIndex: 1301,
@@ -534,7 +544,7 @@ export default function BuildGuidePage() {
                             minHeight: 0,
                         }}
                     >
-                        <Chatbot />
+                        <ChatbotBuild step={steps[activeStep]} />
                     </Box>
                 )}
 
@@ -564,7 +574,7 @@ export default function BuildGuidePage() {
                             </IconButton>
                         </Box>
                         <Box flexGrow={1} minHeight={0}>
-                            <Chatbot />
+                            <ChatbotBuild step={steps[activeStep]} />
                         </Box>
                     </Box>
                 </Drawer>
