@@ -9,12 +9,10 @@ import { motion } from "framer-motion";
 const Chatbot: React.FC = () => {
     const { isLoadingMain, messages, chat, setMessages, setRecommendations, setIsLoading, user } = useChatContext();
     const [userInput, setUserInput] = useState("");
-    const [hasRec, sethasRec] = useState(false);
+    // const [hasRec, sethasRec] = useState(false);
     const userId = user?._id;
 
     const scrollRef = useRef<HTMLDivElement>(null);
-
-    console.log(chat, userId);
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -22,11 +20,11 @@ const Chatbot: React.FC = () => {
         }
     }, [messages]);
 
-    useEffect(() => {
-        if(chat?.recommendation){
-            sethasRec(true);
-        }
-    }, [chat]);
+    // useEffect(() => {
+    //     if(chat?.recommendation){
+    //         sethasRec(true);
+    //     }
+    // }, [chat]);
 
     // Handle sending
     const handleSend = async () => {
@@ -69,9 +67,9 @@ const Chatbot: React.FC = () => {
 
             if (data.recommendation && setRecommendations) {
                 console.log("📦 Setting recommendations:", data.recommendation);
-                sethasRec(true);
+                // sethasRec(true);
                 setRecommendations((prev) => [...prev, data.recommendation]);
-            } else if (setRecommendations && !hasRec) {
+            } else if (setRecommendations ) { //&& !hasRec
                 setRecommendations([]);
             }
         } catch (error) {

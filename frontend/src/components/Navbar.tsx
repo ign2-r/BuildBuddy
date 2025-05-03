@@ -63,7 +63,7 @@ const Navbar = () => {
         <Typography
           variant="h6"
           sx={{ cursor: 'pointer', fontWeight: 600 }}
-          onClick={() => (window.location.href = '/home')}
+          onClick={() => (router.push('/chats'))}
         >
           🧠 BuildBuddy
         </Typography>

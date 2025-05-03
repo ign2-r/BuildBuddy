@@ -1,7 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const { processRecommendation, processGuide } = require("../controllers/chatbotController");
-const { createChat, getChat, getChatById, renameChat } = require("../controllers/chatController");
+const { createChat, getChat, getChatById, renameChat, getUserChatPreview } = require("../controllers/chatController");
 const { getMessages } = require("../controllers/chatController");
 const { deleteChat } = require('../controllers/chatController');
 const {authenticateBearer} = require("../services/verifyAuth");
@@ -19,6 +19,7 @@ router.post("/guide", authenticateBearer, processGuide)
 
 router.get("/get-messages", authenticateBearer, getMessages);
 router.get("/get-chat-id", authenticateBearer, getChatById);
+router.get("/chat-preview", authenticateBearer, getUserChatPreview);
 
 
 module.exports = router;

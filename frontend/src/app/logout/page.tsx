@@ -4,9 +4,11 @@ import { useEffect } from 'react';
 import { doLogout } from "../actions";
 import { Button } from '@mui/material';
 import {useChatContext} from "@/context/ChatContext"
+import { useRouter } from 'next/navigation';
 
 export default function LogoutPage() {
     const {setDefault} = useChatContext()
+    const router = useRouter();
     useEffect(() => {
         const logout = async () => {
             setDefault(true);
@@ -23,7 +25,7 @@ export default function LogoutPage() {
                     color="error"
                     onClick={async () => {
                         await doLogout();
-                        window.location.href = '/login';
+                        router.push('/login');
                     }}
                 >
                     Logging out

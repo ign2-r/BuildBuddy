@@ -127,6 +127,16 @@ chatSchema.statics.getChatByUser = function (uid) {
         .withRecommendations();
 };
 
+chatSchema.statics.getUserChats = function (uid) {
+    return this.find({ creator: createFromHexString(uid) })
+        .select({ display: 1, archived: 1, updatedAt: 1, createdAt: 1 })
+        .populate({
+            path: "messages",
+            match: { role: { $ne: "system" } },
+            options: { sort: { updatedAt: -1 }, limit: 5, select: { role: 1, content: 1, updatedAt: 1, createdAt: 1  } }
+        });
+}
+
 // ===========================================Queries================================================
 
 /**

@@ -58,28 +58,27 @@ export default function ChatsPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    useEffect(() => {
-        if (!user?._id) return;
-        const getChats = async () => {
-            try {
-                const bearerToken = await generateAccessToken(user);
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get-chat`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", Authorization: `bearer ${bearerToken}` },
-                    body: JSON.stringify({ userId: user._id, create: false }),
-                });
-                console.log({ res });
+  useEffect(() => {
+    if (!user?._id) return;
+    const getChats = async () => {
+      try {
+        const bearerToken = await generateAccessToken(user);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat-preview`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `bearer ${bearerToken}` },
+        });
+        console.log({res});
+        
+        if (!res.ok) {
+          throw new Error('Failed to fetch chats');
+        }
 
-                if (!res.ok) {
-                    throw new Error("Failed to fetch chats");
-                }
-
-                const data = await res.json();
-                setChats(data.chat || []);
-            } catch (err) {
-                console.error("Failed to fetch chats:", err);
-            }
-        };
+        const data = await res.json();
+        setChats(data.chats || []);
+      } catch (err) {
+        console.error('Failed to fetch chats:', err);
+      }
+    }
 
         getChats();
     }, [user]);
