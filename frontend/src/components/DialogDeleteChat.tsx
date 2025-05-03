@@ -17,18 +17,20 @@ export function DialogDeleteChat({open, setOpen,handleFunction, agreeText, disag
     return (
         <Dialog
             open={open}
-            aria-label="alert-dialog-logout"
-            >
-            <DialogTitle id="alert-dialog-logout-title">{"Are you sure you want to log out?"}</DialogTitle>
+            aria-label="alert-dialog-delete-chat"
+        >
+            <DialogTitle id="alert-dialog-delete-chat-title">
+                {"Are you sure you want to delete this chat?"}
+            </DialogTitle>
             <DialogContent>
-                <DialogContentText id="alert-dialog-logout-description">
-                    Logging out will sign you out of Buildbuddy and you will have to log in again.
+                <DialogContentText id="alert-dialog-delete-chat-description">
+                    Deleting this chat will permanently remove it and its messages. This action cannot be undone.
                 </DialogContentText>
                 <DialogActions>
-                <Button onClick={handleClose} variant="contained" color="secondary">{disagreeText}</Button>
-                <Button onClick={handleFunctionInternal} variant="contained" autoFocus>
-                    {agreeText}
-                </Button>
+                    <Button onClick={handleClose} variant="contained" color="secondary">{disagreeText}</Button>
+                    <Button onClick={handleFunctionInternal} variant="contained" autoFocus>
+                        {agreeText}
+                    </Button>
                 </DialogActions>
             </DialogContent>
         </Dialog>

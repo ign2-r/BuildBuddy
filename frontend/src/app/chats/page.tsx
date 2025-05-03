@@ -1,13 +1,44 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, Button, Typography, Card, CardContent, Grid } from '@mui/material';
+import { Box, Button, Typography, Card, CardContent, Grid, IconButton } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useChatContext } from '@/context/ChatContext';
 import { useSession } from 'next-auth/react';
 import { Chat } from '@/utils/db';
 import DialogDeleteChat from '@/components/DialogDeleteChat';
 import { generateAccessToken } from '@/app/actions/jwt';
+import { format } from "date-fns";
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+
+// generate a title from the first user message
+function getChatTitle(messages: any[]) {
+    const firstUserMsg = messages?.find((m: any) => m.role === "user")?.content;
+    if (firstUserMsg) {
+        const words = firstUserMsg.trim().split(" ");
+        return words.slice(0, 6).join(" ") + (words.length > 6 ? "..." : "");
+    }
+    return "Untitled Chat";
+}
+
+// get a preview from the latest message
+function getChatPreview(messages: any[]) {
+    const lastMsg = messages?.[messages.length - 1]?.content;
+    if (lastMsg) {
+        return lastMsg.length > 60 ? lastMsg.slice(0, 60) + "..." : "";
+    }
+    return "";
+}
+
+// format date
+function getFormattedDate(dateStr: string) {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return "";
+    return format(date, "MMM d, yyyy, h:mm a");
+}
 
 export default function ChatsPage() {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -16,6 +47,8 @@ export default function ChatsPage() {
   const [openDialog, setOpenDialog] = useState(false);
   const { update } = useSession();
   const router = useRouter();
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState<string>("");
 
   useEffect(() => {
     update();
@@ -114,6 +147,41 @@ export default function ChatsPage() {
     handleDeleteChat();
   }
 
+  const handleDelete = (chatId: string) => {
+    const chat = chats.find(c => c._id === chatId);
+    if (chat) {
+      setDeleteChat(chat);
+      setOpenDialog(true);
+    }
+  };
+
+  const saveChatTitle = async (chatId: string) => {
+    if (!editingTitle.trim()) {
+      alert("Chat title cannot be empty.");
+      return;
+    }
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/rename-chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `bearer ${await generateAccessToken(user)}` },
+        body: JSON.stringify({ chatId, name: editingTitle }),
+      });
+      if (res.ok) {
+        setChats(prev =>
+          prev.map(c =>
+            c._id === chatId ? { ...c, display: editingTitle } : c
+          )
+        );
+        setEditingChatId(null);
+        setEditingTitle("");
+      } else {
+        alert('Failed to rename chat.');
+      }
+    } catch (err) {
+      console.error('Error renaming chat:', err);
+    }
+  };
+
   return (
     <Box sx={{ bgcolor: '#121212', minHeight: '100%', p: 4 }}>
       <Typography variant="h4" color="white" gutterBottom sx={{ textAlign: 'center', fontWeight: 'bold' }}>
@@ -126,57 +194,115 @@ export default function ChatsPage() {
         </Button>
       </Box>
       <DialogDeleteChat agreeText='Delete' disagreeText='Cancel' open={openDialog} setOpen={setOpenDialog} handleFunction={deleteChat}/>
-      <Grid container spacing={2}>
-        {chats.map(chat => (
+      <Grid container spacing={3} sx={{ mt: 2 }}>
+        {chats.map((chat: any) => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={chat._id}>
             <Card
-              sx={{
-                position: 'relative',
-                height: '120px',
-                cursor: 'pointer',
-                p: 2,
-                bgcolor: '#1E1E1E',
-                color: 'white',
-                borderRadius: 2,
-                boxShadow: 3,
-                transition: '0.2s',
-                '&:hover': {
-                  boxShadow: 6,
-                  transform: 'scale(1.02)',
-                },
-              }}
-              onClick={() => openChat(chat._id!)}
+              sx={{ bgcolor: "#232323", color: "white", position: "relative", minHeight: 120, cursor: "pointer" }}
+              onClick={() => openChat(chat._id)}
             >
-              <CardContent>
-                <Typography variant="h6" sx={{ wordBreak: 'break-word' }}>
-                  {chat.display || 'Untitled Chat'}
+              <CardContent sx={{ pb: 6, position: "relative" }}>
+                <Box sx={{ display: "flex", alignItems: "center", pr: 6 }}>
+                  {editingChatId === chat._id ? (
+                    <>
+                      <input
+                        value={editingTitle}
+                        onChange={e => setEditingTitle(e.target.value)}
+                        style={{
+                          fontSize: "1.25rem",
+                          fontWeight: "bold",
+                          background: "#232323",
+                          color: "white",
+                          border: "1px solid #444",
+                          borderRadius: 4,
+                          padding: "2px 8px",
+                          marginRight: 8,
+                          flex: 1,
+                        }}
+                        autoFocus
+                        onClick={e => e.stopPropagation()}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") saveChatTitle(chat._id);
+                          if (e.key === "Escape") {
+                            setEditingChatId(null);
+                            setEditingTitle("");
+                          }
+                        }}
+                      />
+                      <IconButton
+                        size="small"
+                        onClick={e => {
+                          e.stopPropagation();
+                          saveChatTitle(chat._id);
+                        }}
+                        sx={{ color: "lightgreen" }}
+                      >
+                        <CheckIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setEditingChatId(null);
+                          setEditingTitle("");
+                        }}
+                        sx={{ color: "red" }}
+                      >
+                        <CloseIcon />
+                      </IconButton>
+                    </>
+                  ) : (
+                    <>
+                      <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1, flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {
+                          chat.display &&
+                          chat.display.trim() !== "" &&
+                          !/^Chat \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(chat.display.trim()) &&
+                          chat.display.trim() !== getChatTitle(chat.messages)
+                            ? chat.display
+                            : getChatTitle(chat.messages)
+                        }
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setEditingChatId(chat._id);
+                          setEditingTitle(chat.display || getChatTitle(chat.messages));
+                        }}
+                        sx={{ ml: 1, color: "grey.400" }}
+                        aria-label="Rename chat"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </>
+                  )}
+                </Box>
+                <Typography variant="body2" sx={{ color: "grey.400", mb: 2 }}>
+                  {getChatPreview(chat.messages)}
+                </Typography>
+                <Typography variant="caption" sx={{ color: "grey.500", position: "absolute", bottom: 8, right: 16 }}>
+                  {getFormattedDate(chat.createdAt)}
                 </Typography>
               </CardContent>
-
-              <Button
-                variant="contained"
-                color="error"
-                size="small"
-                sx={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  minWidth: 0,
-                  width: 32,
-                  height: 32,
-                  borderRadius: 1,
-                  p: 0,
-                  fontSize: '0.75rem',
+              <IconButton
+                aria-label="delete"
+                onClick={e => {
+                  e.stopPropagation(); // Prevent card click
+                  handleDelete(chat._id);
                 }}
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  setDeleteChat(chat);
-                  console.log("Remove");
-                  setOpenDialog(true);
+                sx={{
+                  position: "absolute",
+                  top: 16,
+                  right: 16,
+                  color: "red",
+                  zIndex: 2,
+                  bgcolor: "#232323",
+                  "&:hover": { bgcolor: "#2e2e2e" }
                 }}
               >
-                🗑️
-              </Button>
+                <DeleteIcon />
+              </IconButton>
             </Card>
           </Grid>
         ))}

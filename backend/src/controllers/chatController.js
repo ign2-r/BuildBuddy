@@ -127,24 +127,29 @@ exports.getMessages = async (req, res) => {
 
   exports.renameChat = async (req, res) => {
     const { chatId, name } = req.body;
-    
-    try {
-      const chat = await Chat.findById(chatId);
-      if (req.user.id !== chat.creator.toString()) return res.status(403).json({ error: "Invalid Permissions To View" });
-  
-      if (!chat) {
-        return res.status(404).json({ status: "fail", message: "Chat not found" });
-      }
-  
-      chat.set({ display: name });
-      await chat.save();
-  
-      return res.status(200).json({ status: "success" });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ status: "fail", message: err.message });
+
+    if (!name || name.trim() === "") {
+        return res.status(400).json({ status: "fail", message: "Chat title cannot be empty." });
     }
-  };
+
+    try {
+        const chat = await Chat.findById(chatId);
+        if (!chat) {
+            return res.status(404).json({ status: "fail", message: "Chat not found" });
+        }
+        if (req.user.id !== chat.creator.toString()) {
+            return res.status(403).json({ error: "Invalid Permissions To View" });
+        }
+
+        chat.set({ display: name });
+        await chat.save();
+
+        return res.status(200).json({ status: "success" });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ status: "fail", message: err.message });
+    }
+};
 
   exports.deleteChat = async (req, res) => {
     const { chatId } = req.body;
@@ -170,4 +175,4 @@ exports.getMessages = async (req, res) => {
       return res.status(500).json({ status: "fail", message: err.message });
     }
   };
-  
+
