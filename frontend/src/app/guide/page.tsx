@@ -352,26 +352,7 @@ export default function BuildGuidePage() {
                         position: 'relative',
                     }}
                 >
-                    {/* Chat button at top right on mobile */}
-                    {isMobile && (
-                        <IconButton
-                            onClick={() => setChatOpen(true)}
-                            sx={{
-                                position: 'absolute',
-                                top: 12,
-                                right: 12,
-                                bgcolor: '#2196f3',
-                                color: 'white',
-                                zIndex: 1301,
-                                boxShadow: 3,
-                                '&:hover': { bgcolor: '#1976d2' }
-                            }}
-                            size="large"
-                            aria-label="Open chat"
-                        >
-                            <ChatIcon fontSize="large" />
-                        </IconButton>
-                    )}
+
 
                     <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <BuildIcon /> PC Build Guide
@@ -522,7 +503,7 @@ export default function BuildGuidePage() {
                         <IconButton
                             onClick={() => setChatOpen(true)}
                             sx={{
-                                position: 'fixed',
+                                position: 'absolute',
                                 bottom: 24,
                                 right: 24,
                                 bgcolor: '#2196f3',

@@ -38,7 +38,7 @@ const RecommendationPanel: React.FC = () => {
       
     return (
         <Box>
-            <Typography variant="h5" gutterBottom>
+            <Typography variant="h5" gutterBottom sx={{ color: 'white' }}>
                 🧩 Recommended Parts
             </Typography>
 
@@ -94,8 +94,8 @@ const RecommendationPanel: React.FC = () => {
                             </Card>
                         ))}
 
-                        <Typography variant="h6" mt={3}>
-                            🧮 Total: ${total.toFixed(2)}
+                        <Typography sx={{ mt: 2, color: 'white' }}>
+                            <span role="img" aria-label="money">🧾</span> Total: ${total}
                         </Typography>
 
                         <Box mt={3}>
