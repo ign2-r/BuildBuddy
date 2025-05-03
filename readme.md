@@ -51,7 +51,11 @@
 6. set up certs for 443
    1. https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-20-04
    2. sudo apt install certbot python3-certbot-nginx
-7. 
-8. [Set up Nginx](https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-20-04#step-5-%E2%80%93-setting-up-server-blocks-(recommended))
+7. [Set up Nginx](https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-20-04#step-5-%E2%80%93-setting-up-server-blocks-(recommended))
    1. sudo nano /etc/nginx/sites-available/your_domain
    2. sudo ln -s /etc/nginx/sites-available/your_domain /etc/nginx/sites-enabled/
+
+### Debugging
+1. restarting nginx
+   1. sudo nginx -t
+   2. sudo systemctl restart nginx
