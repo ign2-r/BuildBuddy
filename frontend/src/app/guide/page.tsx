@@ -94,7 +94,6 @@ export default function BuildGuidePage() {
 
     return (
         <Box height="100vh" display="flex" flexDirection="column" overflow="hidden">
-            <Navbar />
             <ToastContainer />
 
             <Box display="flex" flexGrow={1} minHeight={0} sx={{ p: 3, bgcolor: '#121212' }}>
