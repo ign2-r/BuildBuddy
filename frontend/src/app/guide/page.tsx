@@ -291,7 +291,7 @@ export default function BuildGuidePage() {
 
             // Scroll to next step after state update
             setTimeout(() => {
-                const nextStepRef = stepRefs.current[next];
+                const nextStepRef = stepRefs.current[activeStep];
                 if (nextStepRef) {
                     nextStepRef.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
@@ -326,7 +326,7 @@ export default function BuildGuidePage() {
     };
 
     return (
-        <Box height="100vh" display="flex" flexDirection="column" overflow="hidden">
+        <Box height="100%" display="flex" flexDirection="column" overflow="hidden">
             <ToastContainer />
 
             <Box

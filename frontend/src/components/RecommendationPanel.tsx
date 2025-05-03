@@ -9,8 +9,7 @@ type Part = {
     _id: string;
     name: string;
     msrpPrice?: number | string;
-    link?: string;
-    links?: { vendor: string; url: string }[];
+    links: { vendor: string; url: string }[];
 };
 
 const RecommendationPanel: React.FC = () => {
@@ -104,19 +103,6 @@ const RecommendationPanel: React.FC = () => {
                                         </Box>
                                     )}
                                 </CardContent>
-                                {part.link && (
-                                    <CardActions>
-                                        <Button
-                                            href={part.link}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            variant="outlined"
-                                            color="info"
-                                        >
-                                            View Product
-                                        </Button>
-                                    </CardActions>
-                                )}
                             </Card>
                         ))}
 

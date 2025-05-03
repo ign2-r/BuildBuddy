@@ -22,19 +22,21 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
             </head>
             <body>
-                <AppRouterCacheProvider>
-                    <ThemeProvider theme={theme}>
-                        <CssBaseline />
-                        <ChatContextProvider>
-                            <SessionProvider>
-                                <Navbar/>
-                                <Box sx={{height: "94vh"}}>
-                                    {children}
-                                </Box>
-                            </SessionProvider>
-                        </ChatContextProvider>
-                    </ThemeProvider>
-                </AppRouterCacheProvider>
+                <Box height={"100vh"} bgcolor={"#121212"}>
+                    <AppRouterCacheProvider>
+                        <ThemeProvider theme={theme}>
+                            <CssBaseline />
+                            <ChatContextProvider>
+                                <SessionProvider>
+                                    <Navbar />
+                                    <Box display="flex" flexDirection="column" height="calc(100vh - 64px)" overflow="auto">
+                                        {children}
+                                    </Box>
+                                </SessionProvider>
+                            </ChatContextProvider>
+                        </ThemeProvider>
+                    </AppRouterCacheProvider>
+                </Box>
             </body>
         </html>
     );
