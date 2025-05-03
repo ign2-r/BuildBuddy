@@ -27,10 +27,9 @@ export default function ChatsPage() {
     const getChats = async () => {
       try {
         const bearerToken = await generateAccessToken(user);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get-chat`, {
-          method: 'POST',
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat-preview`, {
+          method: 'GET',
           headers: { 'Content-Type': 'application/json', 'Authorization': `bearer ${bearerToken}` },
-          body: JSON.stringify({ userId: user._id, create: false }),
         });
         console.log({res});
         
@@ -39,7 +38,7 @@ export default function ChatsPage() {
         }
 
         const data = await res.json();
-        setChats(data.chat || []);
+        setChats(data.chats || []);
       } catch (err) {
         console.error('Failed to fetch chats:', err);
       }

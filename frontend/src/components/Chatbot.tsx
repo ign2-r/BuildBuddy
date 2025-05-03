@@ -12,8 +12,6 @@ const Chatbot: React.FC = () => {
 
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    console.log(chat, userId);
-
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;

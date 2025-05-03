@@ -43,6 +43,20 @@ exports.getChat = async (req, res) => {
     }
 };
 
+exports.getUserChatPreview = async (req, res) => {
+  const { id } = req.user;
+  try {
+      if(!id){
+        return res.status(500).json({ status: "fail", status_message: "missing id" });
+      }
+      let chats = await Chat.getUserChats(id);
+      return res.status(200).json({ status: "success", status_message: ``, chats: chats });
+  } catch (err) {
+      console.error(err);
+      return res.status(500).json({ status: "fail", status_message: err._message });
+  }
+};
+
 exports.createChat = async (req, res) => {
     const { userId } = req.body;
     console.log("createChat received userId:", userId);
