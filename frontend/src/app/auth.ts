@@ -59,7 +59,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.role = user.role;
         }
             // console.debug("user:", user, "token:", token);
-            return token;
+            return token; 
         },
         async session({ session, token }) {
             // user id is stored in ._id when using credentials provider

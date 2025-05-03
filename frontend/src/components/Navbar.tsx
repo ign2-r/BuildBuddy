@@ -1,6 +1,5 @@
 'use client';
 
-// import { signOut } from "next-auth/react"
 import { useChatContext } from '@/context/ChatContext';
 import { User } from '@/utils/db';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
@@ -27,7 +26,7 @@ const Navbar = () => {
                 router.replace("/chats");
             }
           }
-    }, [pathname, sessionUser]);
+    }, [pathname, sessionUser, router, session, setUser]);
 
     const handleSignOut = async () => {
         setDefault(true);

@@ -7,6 +7,7 @@ import { useChatContext } from '@/context/ChatContext';
 import { useSession } from 'next-auth/react';
 import { Chat } from '@/utils/db';
 import DialogDeleteChat from '@/components/DialogDeleteChat';
+import { generateAccessToken } from '@/app/actions/jwt';
 
 export default function ChatsPage() {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -23,37 +24,56 @@ export default function ChatsPage() {
 
   useEffect(() => {
     if (!user?._id) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/get-chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: user._id, create: false }),
-    })
-      .then(res => res.json())
-      .then(data => setChats(data.chat || []))
-      .catch(err => console.error('Failed to fetch chats:', err));
+    const getChats = async () => {
+      try {
+        const bearerToken = await generateAccessToken(user);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get-chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `bearer ${bearerToken}` },
+          body: JSON.stringify({ userId: user._id, create: false }),
+        });
+        console.log({res});
+        
+        if (!res.ok) {
+          throw new Error('Failed to fetch chats');
+        }
+
+        const data = await res.json();
+        setChats(data.chat || []);
+      } catch (err) {
+        console.error('Failed to fetch chats:', err);
+      }
+    }
+
+    getChats();
   }, [user]);
 
   const createChat = async () => {
-    try {
-      if (!user?._id) return;
+    if (!user?._id) return;
+    
+    const createChat = async () => {
+      try {
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create-chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user._id }),
-      });
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create-chat`, {
+            method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `bearer ${await generateAccessToken(user)}` },
+          body: JSON.stringify({ userId: user._id }),
+        });
 
-      const data = await res.json();
-      const newChat: Chat = data.chat;
+        const data = await res.json();
+        const newChat: Chat = data.chat;
+        
+        if (!newChat || !newChat._id) return;
+        
+        setChat(newChat);
+        setMessages(newChat.messages || []);
+        router.push(`/home/${newChat._id}`);
+      } catch (err) {
+        console.error('Failed to create chat:', err);
+      }
+  }
+  createChat();
 
-      if (!newChat || !newChat._id) return;
-
-      setChat(newChat);
-      setMessages(newChat.messages || []);
-      router.push(`/home/${newChat._id}`);
-    } catch (err) {
-      console.error('Failed to create chat:', err);
-    }
   };
 
   const openChat = async (chatId: string) => {
@@ -69,21 +89,29 @@ export default function ChatsPage() {
   };
 
   const deleteChat = async () => {
-    console.log("fixed");
-    if(!selectedDeleteChat){
-      throw new Error("Unkown chat to delete");
-    }
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/delete-chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chatId: selectedDeleteChat._id }),
-    });
+    const handleDeleteChat = async () => {
+      console.log("fixed");
+      if(!selectedDeleteChat) {
+      throw new Error("Unknown chat to delete");
+      }
+      try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/delete-chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `bearer ${await generateAccessToken(user)}` },
+        body: JSON.stringify({ chatId: selectedDeleteChat._id }),
+      });
 
-    if (res.ok) {
-      setChats(prev => prev.filter(c => c._id !== selectedDeleteChat._id));
-    } else {
-      alert('Failed to delete chat.');
-    }
+      if (res.ok) {
+        setChats(prev => prev.filter(c => c._id !== selectedDeleteChat._id));
+      } else {
+        alert('Failed to delete chat.');
+      }
+      } catch (err) {
+      console.error('Error deleting chat:', err);
+      }
+    };
+
+    handleDeleteChat();
   }
 
   return (

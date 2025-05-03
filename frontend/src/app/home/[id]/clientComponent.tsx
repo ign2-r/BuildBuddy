@@ -8,6 +8,7 @@ import { Chat, Message } from "@/utils/db";
 import { useChatContext } from "@/context/ChatContext";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { generateAccessToken } from "@/app/actions/jwt";
 
 export function HomePage({chatId}: {chatId:string |null }) {
     const { update } = useSession();
@@ -39,7 +40,7 @@ export function HomePage({chatId}: {chatId:string |null }) {
             try {
                 const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get-chat-id?chatId=${currChatId}`, {
                     method: "GET",
-                    headers: { "Content-Type": "application/json" },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `bearer ${await generateAccessToken(user)}` },
                 });
 
                 if (!res.ok) {
@@ -66,9 +67,7 @@ export function HomePage({chatId}: {chatId:string |null }) {
                         }))
                 );
 
-                if (getChat?.recommendation && getChat.recommendation.length > 0) {
-                    setRecommendations(getChat.recommendation);
-                }
+                setRecommendations(getChat.recommendation ? getChat.recommendation: [] );
             } catch (error) {
                 console.error("Error during fetch: ", error);
             }
