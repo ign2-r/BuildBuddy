@@ -85,7 +85,7 @@ const Chatbot: React.FC = () => {
             }}
         >
             <Typography variant="h6" color="primary" fontWeight={600} sx={{ mb: 1 }}>
-                💬 Chatassistant
+                💬 Conversation
             </Typography>
 
             <Box
@@ -157,8 +157,28 @@ const Chatbot: React.FC = () => {
                 <Typography variant="caption" sx={{ color: "gray", mt: 1 }}>
                     {userInput.length}/250
                 </Typography>
-                <Button onClick={handleSend} variant="contained" sx={{ borderRadius: 3 }} disabled={isLoadingMain}>
-                    {isLoadingMain ? "..." : "Send"}
+                <Button
+                    onClick={handleSend}
+                    variant="contained"
+                    sx={{
+                        borderRadius: 3,
+                        minWidth: 48,
+                        minHeight: 48,
+                        fontSize: 24,
+                        px: 0,
+                        py: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "background 0.2s",
+                    }}
+                    disabled={isLoadingMain || !userInput.trim()}
+                    component={motion.button}
+                    whileTap={{ scale: 0.85 }}
+                    whileHover={{ scale: 1.1 }}
+                    aria-label="Send message"
+                >
+                    {isLoadingMain ? "..." : "📩"}
                 </Button>
             </Box>
         </Box>
