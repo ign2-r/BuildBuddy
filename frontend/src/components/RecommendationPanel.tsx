@@ -73,7 +73,7 @@ const RecommendationPanel: React.FC = () => {
                                     <Typography>{part.name}</Typography>
                                     {part.msrpPrice && (
                                         <Typography>
-                                            💵 ${typeof part.msrpPrice === "number"
+                                            MSRP💵 ${typeof part.msrpPrice === "number"
                                                 ? part.msrpPrice.toFixed(2)
                                                 : parseFloat(part.msrpPrice).toFixed(2)}
                                         </Typography>
