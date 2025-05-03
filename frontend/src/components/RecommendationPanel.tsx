@@ -10,6 +10,7 @@ type Part = {
     name: string;
     msrpPrice?: number | string;
     link?: string;
+    links?: { vendor: string; url: string }[];
 };
 
 const RecommendationPanel: React.FC = () => {
@@ -76,6 +77,31 @@ const RecommendationPanel: React.FC = () => {
                                                 ? part.msrpPrice.toFixed(2)
                                                 : parseFloat(part.msrpPrice).toFixed(2)}
                                         </Typography>
+                                    )}
+                                    {/* Shop buttons */}
+                                    {Array.isArray(part.links) && (
+                                        <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
+                                            {["Amazon", "Newegg", "eBay"].map((vendor) => {
+                                                const linkObj = part.links.find(l => l.vendor?.toLowerCase() === vendor.toLowerCase());
+                                                return linkObj ? (
+                                                    <Button
+                                                        key={vendor}
+                                                        href={linkObj.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        variant="outlined"
+                                                        size="small"
+                                                        sx={{
+                                                            color: 'white',
+                                                            borderColor: 'white',
+                                                            '&:hover': { bgcolor: '#333', borderColor: '#fff' }
+                                                        }}
+                                                    >
+                                                        {vendor}
+                                                    </Button>
+                                                ) : null;
+                                            })}
+                                        </Box>
                                     )}
                                 </CardContent>
                                 {part.link && (
