@@ -4,11 +4,13 @@ import { FormEvent, useState } from 'react';
 import { Container, Box, TextField, Button, Typography, Link } from '@mui/material';
 import { doCredentialLogin } from "@/app/actions";
 import { useRouter } from 'next/navigation';
+import { useChatContext } from '@/context/ChatContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [invalid, setInvalid] = useState(false);
+  const {setdialogState, setopenDialog} = useChatContext();
 
   const router = useRouter();
 
@@ -23,6 +25,8 @@ export default function LoginPage() {
           setInvalid(true);
         }
       } else {
+        setdialogState({type:"success", message: "Logged in!"});
+        setopenDialog(true);
         router.push("/chats");
       }
     } catch (e) {

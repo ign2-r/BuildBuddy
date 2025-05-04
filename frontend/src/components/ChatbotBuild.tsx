@@ -20,7 +20,7 @@ const ChatbotBuild: React.FC<{ step: StepType }> = ({ step }) => {
     useEffect(() => {
         const currMsg = [
             { role: "system", content: "IN JSON FORMAT HELP WITH BUILD STEP: " + String(JSON.stringify(step)) },
-            { role: "assistant", content: `Hello! Based on the current step, how can I help you build?\n\nStep Description:\n${step.description}` },
+            { role: "assistant", content: `Hello! Based on the current step, how can I help you build?\n\nNote: The chat history is temporary\n\nStep Description:\n${step.description}` },
         ];
         setAllMessages(currMsg);
         setMessages(currMsg.filter((msg) => msg.role !== "system"));
@@ -36,7 +36,7 @@ const ChatbotBuild: React.FC<{ step: StepType }> = ({ step }) => {
     const handleSend = async () => {
         if (userInput.trim() === "") return;
 
-        const MAX_MESSAGES = 100;
+        const MAX_MESSAGES = 14;
         const totalMessages = messages.filter((m) => m.role === "user" || m.role === "assistant").length;
 
         if (totalMessages >= MAX_MESSAGES) {

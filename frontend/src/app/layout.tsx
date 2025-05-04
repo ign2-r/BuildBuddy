@@ -9,12 +9,14 @@ import { SessionProvider } from "next-auth/react";
 import { ChatContextProvider } from "@/context/ChatContext";
 import Navbar from "@/components/Navbar";
 import { Box } from "@mui/material";
+import NotificationSystem from "@/components/alerts";
 
 interface RootLayoutProps {
     children: ReactNode;
 }
 
 const RootLayout = ({ children }: RootLayoutProps) => {
+
     return (
         <html lang="en">
             <head>
@@ -28,7 +30,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
                             <CssBaseline />
                             <ChatContextProvider>
                                 <SessionProvider>
-                                    <Navbar />
+                                <NotificationSystem/>
+                                <Navbar />
                                     <Box display="flex" flexDirection="column" height="calc(100vh - 64px)" overflow="auto">
                                         {children}
                                     </Box>
