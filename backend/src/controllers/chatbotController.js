@@ -325,12 +325,14 @@ exports.processGuide = async (req, res) => {
     const { userId, messages } = req.body;
     try {
         const response = await parseBuildMessage(userId, messages);
-        if (response.status != "success")
+        if (response.status != "success"){
+            console.error("Response is not a success")
             return res.status(500).json({
                 status: response.status,
                 status_message: response.status_message,
                 message: response.response,
             });
+        }
         return res.status(200).json({
             status: "success",
             status_message: ``,
@@ -338,7 +340,7 @@ exports.processGuide = async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        return res.status(500).json({ status: "fail", status_message: err._message });
+        return res.status(500).json({ status: "fail", status_message: err._message, message: "something has went wrong" });
     }
 };
 

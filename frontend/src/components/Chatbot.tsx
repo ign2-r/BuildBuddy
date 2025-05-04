@@ -7,7 +7,7 @@ import { generateAccessToken } from "@/app/actions/jwt";
 import { motion } from "framer-motion";
 
 const Chatbot: React.FC = () => {
-    const { isLoadingMain, messages, chat, setMessages, setRecommendations, setIsLoading, user } = useChatContext();
+    const { isLoadingMain, messages, chat, setMessages, setRecommendations, setIsLoading, user, setdialogState, setopenDialog } = useChatContext();
     const [userInput, setUserInput] = useState("");
     // const [hasRec, sethasRec] = useState(false);
     const userId = user?._id;
@@ -30,7 +30,7 @@ const Chatbot: React.FC = () => {
     const handleSend = async () => {
         if (userInput.trim() === "") return;
 
-        const MAX_MESSAGES = 100;
+        const MAX_MESSAGES = 14;
         const totalMessages = messages.filter((m) => m.role === "user" || m.role === "assistant").length;
 
         if (totalMessages >= MAX_MESSAGES) {
@@ -69,6 +69,8 @@ const Chatbot: React.FC = () => {
                 console.log("📦 Setting recommendations:", data.recommendation);
                 // sethasRec(true);
                 setRecommendations((prev) => [...prev, data.recommendation]);
+                setdialogState({type:"success", message: "Added recommendation!"});
+                setopenDialog(true);
             } else if (setRecommendations ) { //&& !hasRec
                 setRecommendations([]);
             }
