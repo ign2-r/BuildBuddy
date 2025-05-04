@@ -14,6 +14,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { motion, AnimatePresence } from "framer-motion";
 
 // generate a title from the first user message
@@ -28,8 +30,8 @@ function getChatTitle(messages: Message[]) {
 
 // get a preview from the latest message
 function getChatPreview(messages: Message[]) {
-  const lastMsg = messages?.at(-1)?.content ?? "";
-  console.log(lastMsg);
+    const lastMsg = messages?.at(-1)?.content ?? "";
+    console.log(lastMsg);
     if (lastMsg) {
         return lastMsg.length > 60 ? lastMsg.slice(0, 60) + "..." : "";
     }
@@ -52,33 +54,34 @@ export default function ChatsPage() {
     const router = useRouter();
     const [editingChatId, setEditingChatId] = useState<string | null>(null);
     const [editingTitle, setEditingTitle] = useState<string>("");
+    // const [selectedChat, setselectedChat] = useState<Chat | null>(null);
 
     useEffect(() => {
         update();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-  useEffect(() => {
-    if (!user?._id) return;
-    const getChats = async () => {
-      try {
-        const bearerToken = await generateAccessToken(user);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat-preview`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `bearer ${bearerToken}` },
-        });
-        console.log({res});
-        
-        if (!res.ok) {
-          throw new Error('Failed to fetch chats');
-        }
+    useEffect(() => {
+        if (!user?._id) return;
+        const getChats = async () => {
+            try {
+                const bearerToken = await generateAccessToken(user);
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chat-preview`, {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json", Authorization: `bearer ${bearerToken}` },
+                });
+                console.log({ res });
 
-        const data = await res.json();
-        setChats(data.chats || []);
-      } catch (err) {
-        console.error('Failed to fetch chats:', err);
-      }
-    }
+                if (!res.ok) {
+                    throw new Error("Failed to fetch chats");
+                }
+
+                const data = await res.json();
+                setChats(data.chats || []);
+            } catch (err) {
+                console.error("Failed to fetch chats:", err);
+            }
+        };
 
         getChats();
     }, [user]);
@@ -122,7 +125,6 @@ export default function ChatsPage() {
 
     const deleteChat = async () => {
         const handleDeleteChat = async () => {
-            console.log("fixed");
             if (!selectedDeleteChat) {
                 throw new Error("Unknown chat to delete");
             }
@@ -144,6 +146,26 @@ export default function ChatsPage() {
         };
 
         handleDeleteChat();
+    };
+
+    const handleToggleVisibility = async (selectedChat: Chat) => {
+        try {
+
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/visibility`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `bearer ${await generateAccessToken(user)}` },
+                body: JSON.stringify({ chatId: selectedChat._id, visibility: selectedChat.visbility == "private" ? "publc" : "private" }),
+            });
+
+            if (res.ok) {
+                const updatedChat = { ...selectedChat, visbility: selectedChat.visbility === "private" ? "public" : "private" };
+                setChats((prev) => prev.map((c) => (c._id === updatedChat._id ? updatedChat : c)));
+            } else {
+                alert("Failed to update chat visibility.");
+            }
+        } catch (err) {
+            console.error("Error deleting chat:", err);
+        }
     };
 
     const handleDelete = (chatId: string) => {
@@ -177,11 +199,11 @@ export default function ChatsPage() {
         }
     };
 
-  const sortedChats = [...chats].sort((a, b) => {
-    const aLastMsg = a.messages?.length ? a.messages[a.messages.length - 1]?.createdAt : a.updatedAt || a.createdAt;
-    const bLastMsg = b.messages?.length ? b.messages[b.messages.length - 1]?.createdAt : b.updatedAt || b.createdAt;
-    return new Date(bLastMsg || 0).getTime() - new Date(aLastMsg || 0).getTime();
-  });
+    const sortedChats = [...chats].sort((a, b) => {
+        const aLastMsg = a.messages?.length ? a.messages[a.messages.length - 1]?.createdAt : a.updatedAt || a.createdAt;
+        const bLastMsg = b.messages?.length ? b.messages[b.messages.length - 1]?.createdAt : b.updatedAt || b.createdAt;
+        return new Date(bLastMsg || 0).getTime() - new Date(aLastMsg || 0).getTime();
+    });
 
     return (
         <Box sx={{ bgcolor: "#121212", minHeight: "100%", p: 4 }}>
@@ -197,31 +219,31 @@ export default function ChatsPage() {
             <DialogDeleteChat agreeText="Delete" disagreeText="Cancel" open={openDialog} setOpen={setOpenDialog} handleFunction={deleteChat} />
             <AnimatePresence>
                 <Grid
-                  component={motion.div}
-                  layout
-                  container
-                  gap={3}
-                  sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}
-                  width={"100%"}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -30 }}
-                  transition={{ duration: 0.4, type: "spring" }}
+                    component={motion.div}
+                    layout
+                    container
+                    gap={3}
+                    sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}
+                    width={"100%"}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -30 }}
+                    transition={{ duration: 0.4, type: "spring" }}
                 >
                     {sortedChats.map((chat: Chat) => (
-                        <Grid key={chat._id} size={{xs: 10, sm: 5, md: 4, lg: 3}} height={"100%"} width={"100%"}>
+                        <Grid key={chat._id} size={{ xs: 10, sm: 5, md: 4, lg: 3 }} height={"100%"} width={"100%"}>
                             <Card
-                              sx={{
-                                bgcolor: "#232323",
-                                color: "white",
-                                position: "relative",
-                                height: "100%",
-                                cursor: "pointer",
-                                width: "100%",
-                                display: "flex",
-                                flexDirection: "column",
-                              }}
-                              onClick={() => openChat(chat._id)}
+                                sx={{
+                                    bgcolor: "#232323",
+                                    color: "white",
+                                    position: "relative",
+                                    height: "100%",
+                                    cursor: "pointer",
+                                    width: "100%",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                }}
+                                onClick={() => openChat(chat._id)}
                             >
                                 <CardContent sx={{ pb: 6, position: "relative" }}>
                                     <Box sx={{ display: "flex", alignItems: "center", pr: 6 }}>
@@ -294,6 +316,17 @@ export default function ChatsPage() {
                                                     aria-label="Rename chat"
                                                 >
                                                     <EditIcon />
+                                                </IconButton>
+                                                <IconButton
+                                                    size="small"
+                                                    aria-label="visibility"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleToggleVisibility(chat);
+                                                    }}
+                                                    sx={{color:"whitesmoke", ":hover":{color:"gray"}}}
+                                                >
+                                                    {chat.visbility == "private" ? <VisibilityOffIcon /> : <VisibilityIcon />}
                                                 </IconButton>
                                             </>
                                         )}

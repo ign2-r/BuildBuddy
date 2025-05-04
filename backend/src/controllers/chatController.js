@@ -129,7 +129,7 @@ exports.getMessages = async (req, res) => {
     const { chatId } = req.query;
     try {
       const chat = await Chat.findById(chatId).withMessagesMin().withRecommendations();
-      if (req.user.id !== chat.creator.toString()) return res.status(403).json({ error: "Invalid Permissions To View" });
+      if (chat.visibility == 'private' && req.user.id !== chat.creator.toString()) return res.status(403).json({ error: "Invalid Permissions To View" });
       if (!chat) return res.status(404).json({ error: "Chat not found" });
   
       return res.status(200).json({ chat: chat });
@@ -179,6 +179,23 @@ exports.getMessages = async (req, res) => {
       await Chat.findByIdAndDelete(chatId);
   
       return res.status(200).json({ status: "success" });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ status: "fail", message: err.message });
+    }
+  };
+
+  exports.setVisibility = async (req, res) => {
+    const {visibility, chatId} = req.body;
+    if(!visibility) {
+      return res.status(404).json({ status: "fail", message: "missing visibility" });
+    }
+    try{   
+      const chat = await Chat.findById(chatId);
+      chat.set({ visibility: visibility });
+      await chat.save();
+      return res.status(200).json({ status: "success", message: "visibility updated successfully" });
+
     } catch (err) {
       console.error(err);
       return res.status(500).json({ status: "fail", message: err.message });

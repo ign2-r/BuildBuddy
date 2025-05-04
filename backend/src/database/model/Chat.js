@@ -23,6 +23,7 @@ const chatSchema = new mongoose.Schema(
         creator: { type: Schema.Types.ObjectId, ref: "User", required: true, immutable: true },
         archived: { type: Boolean, default: false },
         messages: { type: [{ type: Schema.Types.ObjectId, ref: "Message" }], default: [] },
+        visibility: {type: String, default: 'private'},
         recommendation: {
             type: [recommendationSchema],
             default: [],

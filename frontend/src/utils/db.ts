@@ -79,6 +79,7 @@ export interface Chat {
     archived?: boolean;
     createdAt: Date | string;
     updatedAt: Date | string;
+    visbility: string;
     messages: Message[];
     recommendation: Recommendation[];
 }
